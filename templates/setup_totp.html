@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Set Up TOTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            text-align: center;
+            padding: 40px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: inline-block;
+            max-width: 500px;
+        }
+        img {
+            margin: 20px 0;
+            max-width: 250px;
+        }
+        .manual-code {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .confirm-button {
+            margin-top: 25px;
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #0078D7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .confirm-button:hover {
+            background-color: #005fa3;
+        }
+        .note {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+        .fallback-link {
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Secure Blockchain Wallet</h2>
+        <p>To continue, please set up Two-Factor Authentication (TOTP).</p>
+
+        <h3>Scan this QR code with your authenticator app:</h3>
+        <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" />
+
+        <p>If you can't scan, use this code manually:</p>
+        <div class="manual-code">{{ secret }}</div>
+
+        <p>Once you've added it to your app, click below to verify:</p>
+        <form action="{{ url_for('verify_totp') }}" method="get">
+            <button type="submit" class="confirm-button">I've scanned the code — Continue</button>
+        </form>
+
+        <p class="note">Once you've scanned the code, click the button below to continue.</p>
+        <div class="fallback-link">
+            <a href="{{ url_for('verify_totp') }}">Click here if you're not redirected</a>
+        </div>
+
+        <p style="margin-top: 30px; font-size: 0.9em;">© 2025 Secure Wallet Inc.</p>
+    </div>
+</body>
+</html>

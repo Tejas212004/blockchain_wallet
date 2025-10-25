@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Admin Dashboard: {{ username }}</h2>
+<h3>All Transactions:</h3>
+
+<table>
+    <tr>
+        <th>User</th>
+        <th>Amount</th>
+        <th>Recipient</th>
+        <th>Note</th>
+        <th>Status</th>
+        <th>Timestamp</th>
+    </tr>
+    {% for txn in transactions %}
+    <tr>
+        <td>{{ txn.user_id }}</td>
+        <td>{{ txn.amount }}</td>
+        <td>{{ txn.recipient }}</td>
+        <td>{{ txn.note }}</td>
+        <td>{{ txn.status }}</td>
+        <td>{{ txn.timestamp }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

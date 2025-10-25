@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Login</h2>
+
+<form method="POST" action="{{ url_for('login') }}">
+    <label>Email:</label><br>
+    <input type="email" name="email" required><br><br>
+
+    <label>Password:</label><br>
+    <input type="password" name="password" required><br><br>
+
+    <label>TOTP Code (if enabled):</label><br>
+    <input type="text" name="totp" placeholder="Enter TOTP code (if registered)"><br><br>
+
+    <input type="submit" value="Login">
+</form>
+
+<p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+
+<p>Haven't set up TOTP yet? <a href="{{ url_for('setup_totp') }}">Click here to set it up</a></p>
+
+{% endblock %}
