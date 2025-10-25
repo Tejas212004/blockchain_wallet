@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Admin Dashboard: {{ username }}</h2>
-<h3>All Transactions:</h3>
+<p><a href="{{ url_for('create_admin_account') }}">Provision New Admin Account</a></p>
+<h3>All Transactions (Blockchain Ledger):</h3>
 
 <table>
     <tr>
-        <th>User</th>
+        <th>Block Hash</th> 
+        <th>User ID</th>
         <th>Amount</th>
         <th>Recipient</th>
         <th>Note</th>
@@ -14,6 +16,7 @@
     </tr>
     {% for txn in transactions %}
     <tr>
+        <td>{{ txn.block_hash }}</td> 
         <td>{{ txn.user_id }}</td>
         <td>{{ txn.amount }}</td>
         <td>{{ txn.recipient }}</td>
