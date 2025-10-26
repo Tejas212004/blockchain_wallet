@@ -1,21 +1,84 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Submit a Transaction</h2>
-<form method="POST" action="{{ url_for('submit_transaction') }}">
-    {{ form.hidden_tag() }}
+<div class="row justify-content-center mt-5">
+    <div class="col-lg-8 col-xl-7">
+        
+        <div class="card shadow-lg border-primary">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-arrow-circle-right me-2"></i> Submit New Transaction
+                </h4>
+            </div>
+            <div class="card-body p-5">
+                
+                <p class="lead text-muted text-center mb-4">
+                    Complete the details below. A valid **2FA code is required** to sign and mine this transaction onto the blockchain.
+                </p>
 
-    <label>Amount:</label><br>
-    {{ form.amount(size=32) }}<br><br>
+                <form method="POST" action="{{ url_for('submit_transaction') }}">
+                    {{ form.hidden_tag() }}
 
-    <label>Recipient:</label><br>
-    {{ form.recipient(size=32) }}<br><br>
+                    <h5 class="text-primary mb-3"><i class="fas fa-file-invoice-dollar me-1"></i> Transaction Details</h5>
+                    
+                    <div class="form-floating mb-3">
+                        {{ form.amount(class="form-control", id="amount", placeholder="e.g., 8500.00", required=true) }}
+                        <label for="amount">Amount (₹ Rupees)</label>
+                        {% for error in form.amount.errors %}
+                            <span class="text-danger small d-block mt-1">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        {{ form.recipient(class="form-control", id="recipient", placeholder="Recipient's Email or Wallet ID", required=true) }}
+                        <label for="recipient">Recipient (Email/Address)</label>
+                        {% for error in form.recipient.errors %}
+                            <span class="text-danger small d-block mt-1">{{ error }}</span>
+                        {% endfor %}
+                    </div>
 
-    <label>Notes:</label><br>
-    {{ form.notes(rows=4, cols=50) }}<br><br>
+                    <div class="form-group mb-3">
+                        <label for="notes" class="fw-bold mb-2">Notes (Will be Encrypted on Blockchain):</label>
+                        {{ form.notes(class="form-control", rows=3, id="notes", placeholder="Purpose of transaction") }}
+                        {% for error in form.notes.errors %}
+                            <span class="text-danger small d-block mt-1">{{ error }}</span>
+                        {% endfor %}
+                    </div>
 
-    <label>Status:</label><br>
-    {{ form.status() }}<br><br>
+                    <div class="form-group mb-4">
+                        <label for="status" class="fw-bold mb-2">Status:</label>
+                        {{ form.status(class="form-select", id="status") }}
+                        {% for error in form.status.errors %}
+                            <span class="text-danger small d-block mt-1">{{ error }}</span>
+                        {% endfor %}
+                    </div>
 
-    {{ form.submit() }}
-</form>
+                    <hr class="my-4">
+
+                    <h5 class="text-danger mb-3"><i class="fas fa-shield-alt me-1"></i> Security Verification</h5>
+                    
+                    <div class="form-floating mb-4">
+                        {{ form.totp_code(class="form-control", id="totp_code", placeholder="123456", size=6, maxlength=6, pattern="\d{6}", title="Six digit TOTP code", required=true) }}
+                        <label for="totp_code">2FA/TOTP Code (Required to Sign Transaction)</label>
+                        {% for error in form.totp_code.errors %}
+                            <span class="text-danger small d-block mt-1">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        {{ form.submit(class="btn btn-primary btn-lg fw-bold") }}
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <a href="{{ url_for('dashboard_customer') }}" class="text-secondary text-decoration-none">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

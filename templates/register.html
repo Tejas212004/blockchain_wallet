@@ -1,27 +1,61 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Register</h2>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-7 col-lg-5">
+        
+        <div class="card shadow-lg border-success">
+            <div class="card-header bg-success text-white text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i> Register New Account
+                </h4>
+            </div>
+            <div class="card-body p-4">
 
-{% with messages = get_flashed_messages(category_filter=['info']) %}
-    {% if messages %}
-        <p style="color: blue;">{{ messages[0] }}</p>
-    {% endif %}
-{% endwith %}
+                {% with messages = get_flashed_messages(category_filter=['info']) %}
+                    {% if messages %}
+                        <div class="alert alert-info border-info text-center small mb-4">
+                            <i class="fas fa-exclamation-triangle me-1"></i> **Special Notice:** {{ messages[0] }}
+                        </div>
+                    {% endif %}
+                {% endwith %}
 
-<form method="POST" action="{{ url_for('register') }}">
-    <label for="username">Username:</label><br>
-    <input type="text" id="username" name="username" required><br><br>
+                <form method="POST" action="{{ url_for('register') }}">
+                    
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+                        <label for="username">Username</label>
+                    </div>
 
-    <label for="email">Email:</label><br>
-    <input type="email" id="email" name="email" required><br><br>
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
+                        <label for="email">Email address</label>
+                    </div>
 
-    <label for="password">Password:</label><br>
-    <input type="password" id="password" name="password" required><br><br>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                        <label for="password">Password</label>
+                    </div>
 
-    <label for="confirm_password">Confirm Password:</label><br>
-    <input type="password" id="confirm_password" name="confirm_password" required><br><br>
+                    <div class="form-floating mb-4">
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+                        <label for="confirm_password">Confirm Password</label>
+                    </div>
 
-    <button type="submit">Register as Customer</button>
-</form>
-<p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg fw-bold">
+                            <i class="fas fa-check me-2"></i> Register as Customer
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}" class="text-success fw-bold">Login here</a></p>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

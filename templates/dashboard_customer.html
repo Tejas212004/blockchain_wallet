@@ -1,29 +1,92 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Welcome, {{ username }}!</h2>
-<h3>Your Transactions (Blockchain Records):</h3>
+<div class="row mt-4">
+    <div class="col-12">
+        <h2 class="mb-2 text-dark-emphasis">
+            <i class="fas fa-wallet me-2 text-success"></i> Customer Dashboard
+            <span class="badge bg-success ms-2">Customer</span>
+        </h2>
+        <p class="lead text-muted">Welcome, <span class="fw-bold">{{ username }}</span>. View and manage your financial records.</p>
+    </div>
+</div>
 
-<table>
-    <tr>
-        <th>Block Hash</th>
-        <th>Amount</th>
-        <th>Recipient</th>
-        <th>Note</th>
-        <th>Status</th>
-        <th>Timestamp</th>
-    </tr>
-    {% for txn in transactions %}
-    <tr>
-        <td>{{ txn.block_hash }}</td>
-        <td>{{ txn.amount }}</td>
-        <td>{{ txn.recipient }}</td>
-        <td>{{ txn.note }}</td>
-        <td>{{ txn.status }}</td>
-        <td>{{ txn.timestamp }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="row mb-4">
+    <div class="col-md-12">
+        {# Call to Action Card: Submit New Transaction #}
+        <div class="card shadow-lg bg-light-subtle border-success">
+            <div class="card-body text-center p-4">
+                <h5 class="card-title text-success mb-3"><i class="fas fa-exchange-alt me-2"></i> Ready for a New Transaction?</h5>
+                <p class="card-text text-muted">Click below to securely submit and mine a new transaction onto the blockchain ledger.</p>
+                <a href="{{ url_for('submit_transaction') }}" class="btn btn-success btn-lg mt-2 shadow-sm">
+                    <i class="fas fa-plus me-1"></i> Submit New Transaction
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
-<br>
-<a href="{{ url_for('submit_transaction') }}">Submit New Transaction</a>
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-lg">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-history me-2"></i> Your Transactions (Blockchain Records)
+                </h4>
+            </div>
+            <div class="card-body p-0">
+                
+                {# Responsive table wrapper #}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Hash</th> 
+                                <th>Amount</th>
+                                <th>Recipient</th>
+                                <th style="width: 30%;">Note (Decrypted)</th>
+                                <th>Status</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for txn in transactions %}
+                            <tr>
+                                <td class="text-monospace small">{{ txn.block_hash }}</td> 
+                                {# 🔥 CHANGE: Changed currency symbol to ₹ #}
+                                <td class="fw-bold text-end">₹{{ txn.amount }}</td> 
+                                <td>{{ txn.recipient }}</td>
+                                <td>
+                                    <small class="text-break">{{ txn.note }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if txn.status == 'complete' or txn.status == 'completed' %}bg-success
+                                        {% elif txn.status == 'pending' %}bg-warning text-dark
+                                        {% else %}bg-danger
+                                        {% endif %}">
+                                        {{ txn.status.upper() }}
+                                    </span>
+                                </td>
+                                <td class="small">{{ txn.timestamp }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">
+                                    <i class="fas fa-box-open me-1"></i> No transactions found in your account history.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                Displaying {{ transactions|length }} transactions.
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

@@ -1,15 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Verify TOTP</title>
-</head>
-<body>
-    <h2>Verify Your TOTP Code</h2>
-    <form method="POST">
-        <label>Enter the 6-digit code from your authenticator app:</label><br>
-        <input type="text" name="totp" required><br><br>
-        <input type="submit" value="Verify">
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-7 col-lg-5">
+        
+        <div class="card shadow-lg border-danger">
+            <div class="card-header bg-danger text-white text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-key me-2"></i> Verify Two-Factor Authentication
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                
+                <p class="lead text-muted text-center mb-4">
+                    Please enter the time-sensitive, 6-digit code from your authenticator app to access the system.
+                </p>
+
+                <form method="POST" action="{{ url_for('verify_totp') }}">
+                    
+                    <div class="form-floating mb-4">
+                        <input type="text" class="form-control text-center" id="totp" name="totp" placeholder="123456" 
+                                pattern="\d{6}" title="Six digit TOTP code" maxlength="6" required autofocus>
+                        <label for="totp">Enter 6-digit TOTP Code</label>
+                        <small class="text-muted d-block mt-1">This code refreshes every 30 seconds.</small>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger btn-lg fw-bold">
+                            <i class="fas fa-check-shield me-2"></i> Verify Code
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <p class="mb-0 small text-muted">
+                    Lost your device or need to re-setup? 
+                    <a href="{{ url_for('setup_totp') }}" class="text-secondary">Click here to re-setup 2FA.</a>
+                </p>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

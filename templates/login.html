@@ -1,22 +1,53 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Login</h2>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-7 col-lg-5">
+        
+        <div class="card shadow-lg border-primary">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-lock me-2"></i> Secure Wallet Login
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted text-center mb-4">
+                    Please log in with your credentials and required TOTP code.
+                </p>
 
-<form method="POST" action="{{ url_for('login') }}">
-    <label>Email:</label><br>
-    <input type="email" name="email" required><br><br>
+                <form method="POST" action="{{ url_for('login') }}">
+                    
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required autofocus>
+                        <label for="email">Email address</label>
+                    </div>
 
-    <label>Password:</label><br>
-    <input type="password" name="password" required><br><br>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                        <label for="password">Password</label>
+                    </div>
 
-    <label>TOTP Code (if enabled):</label><br>
-    <input type="text" name="totp" placeholder="Enter TOTP code (if registered)"><br><br>
+                    <div class="form-floating mb-4">
+                        <input type="text" class="form-control" id="totp" name="totp" placeholder="123456" pattern="\d{6}" title="Six digit TOTP code" required>
+                        <label for="totp">TOTP Code (Required)</label>
+                        <small class="text-muted d-block mt-1">Check your authenticator app for the 6-digit code.</small>
+                    </div>
 
-    <input type="submit" value="Login">
-</form>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                            <i class="fas fa-sign-in-alt me-2"></i> Log In
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <p class="mb-1">Don't have an account? <a href="{{ url_for('register') }}" class="text-primary fw-bold">Register here</a></p>
+                <p class="mb-0">Need 2FA setup? <a href="{{ url_for('setup_totp') }}" class="text-secondary">Set up TOTP</a></p>
+            </div>
+        </div>
+        
+    </div>
+</div>
 
-<p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
-
-<p>Haven't set up TOTP yet? <a href="{{ url_for('setup_totp') }}">Click here to set it up</a></p>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

@@ -1,5 +1,45 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Your Wallet</h2>
-<p>This page is under construction. Future features may include balance tracking, encryption status, and quick actions.</p>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-9 col-lg-7">
+        
+        <div class="card shadow-lg border-warning">
+            <div class="card-header bg-warning text-dark text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-tools me-2"></i> Your Wallet
+                </h4>
+            </div>
+            <div class="card-body p-4 text-center">
+                
+                <h2 class="text-dark mb-4">Wallet Feature Coming Soon!</h2>
+                
+                <div class="alert alert-info border-info text-start" role="alert">
+                    <h5 class="alert-heading"><i class="fas fa-hourglass-half me-2"></i> Under Development</h5>
+                    <p class="mb-0">
+                        This page is currently **under construction** as we implement the core ledger features first. 
+                        We appreciate your patience.
+                    </p>
+                </div>
+                
+                <p class="lead mt-4 text-muted">
+                    Future features planned for this page include:
+                </p>
+                
+                <ul class="list-group list-group-flush text-start mb-4">
+                    <li class="list-group-item"><i class="fas fa-coins me-2 text-success"></i> Real-time Balance Tracking</li>
+                    <li class="list-group-item"><i class="fas fa-key me-2 text-primary"></i> Encryption Status and Key Management</li>
+                    <li class="list-group-item"><i class="fas fa-bolt me-2 text-warning"></i> Quick Action Buttons (Send/Receive)</li>
+                </ul>
+
+                <a href="{{ url_for('dashboard_customer') }}" class="btn btn-secondary mt-3">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

@@ -1,79 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Set Up TOTP</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-            text-align: center;
-            padding: 40px;
-        }
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            display: inline-block;
-            max-width: 500px;
-        }
-        img {
-            margin: 20px 0;
-            max-width: 250px;
-        }
-        .manual-code {
-            font-weight: bold;
-            font-size: 1.2em;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .confirm-button {
-            margin-top: 25px;
-            padding: 10px 20px;
-            font-size: 1em;
-            background-color: #0078D7;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .confirm-button:hover {
-            background-color: #005fa3;
-        }
-        .note {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 10px;
-        }
-        .fallback-link {
-            margin-top: 15px;
-            font-size: 0.9em;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Secure Blockchain Wallet</h2>
-        <p>To continue, please set up Two-Factor Authentication (TOTP).</p>
+{% extends "base.html" %}
 
-        <h3>Scan this QR code with your authenticator app:</h3>
-        <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" />
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 col-lg-6">
+        
+        <div class="card shadow-lg border-danger">
+            <div class="card-header bg-danger text-white text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i> Set Up Two-Factor Authentication (2FA)
+                </h4>
+            </div>
+            <div class="card-body p-4 text-center">
+                
+                <p class="lead text-muted mb-4">
+                    This security step is **required**. Please use a reliable authenticator app (e.g., Google Authenticator).
+                </p>
 
-        <p>If you can't scan, use this code manually:</p>
-        <div class="manual-code">{{ secret }}</div>
+                <h5 class="mt-4 mb-3 text-primary">1. Scan the QR Code</h5>
+                
+                <div class="d-flex justify-content-center mb-4">
+                    {% if qr_code %}
+                        <img src="data:image/png;base64,{{ qr_code }}" class="img-fluid border border-3 p-2 rounded shadow-sm" alt="TOTP QR Code" style="max-width: 250px;">
+                    {% else %}
+                        <p class="text-danger">Error: QR code data is missing.</p>
+                    {% endif %}
+                </div>
 
-        <p>Once you've added it to your app, click below to verify:</p>
-        <form action="{{ url_for('verify_totp') }}" method="get">
-            <button type="submit" class="confirm-button">I've scanned the code — Continue</button>
-        </form>
+                <h5 class="mt-4 mb-3 text-primary">2. Manual Entry (If Scanning Fails)</h5>
+                
+                {% if secret %}
+                <div class="alert alert-warning p-3">
+                    <p class="mb-1">If you cannot scan, manually enter this **Secret Key**:</p>
+                    <code class="fs-5 fw-bold text-dark">{{ secret }}</code>
+                    <p class="mt-2 mb-0 small">**CRITICAL:** Save this key securely for account recovery.</p>
+                </div>
+                {% endif %}
+                
+                <h5 class="mt-4 mb-3 text-primary">3. Continue to Verification</h5>
+                <p>Once you've added the account to your app, click below to verify and complete the setup.</p>
 
-        <p class="note">Once you've scanned the code, click the button below to continue.</p>
-        <div class="fallback-link">
-            <a href="{{ url_for('verify_totp') }}">Click here if you're not redirected</a>
+                <div class="d-grid mt-4">
+                    <a href="{{ url_for('verify_totp') }}" class="btn btn-success btn-lg fw-bold">
+                        <i class="fas fa-check-circle me-2"></i> I've Added the Code — Continue
+                    </a>
+                </div>
+
+            </div>
+            <div class="card-footer text-center bg-light">
+                <p class="mb-0 small text-muted">Two-Factor Authentication significantly improves your account security.</p>
+            </div>
         </div>
-
-        <p style="margin-top: 30px; font-size: 0.9em;">© 2025 Secure Wallet Inc.</p>
+        
     </div>
-</body>
-</html>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}
