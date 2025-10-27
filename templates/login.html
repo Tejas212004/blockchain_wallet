@@ -28,9 +28,11 @@
                     </div>
 
                     <div class="form-floating mb-4">
-                        <input type="text" class="form-control" id="totp" name="totp" placeholder="123456" pattern="\d{6}" title="Six digit TOTP code" required>
-                        <label for="totp">TOTP Code (Required)</label>
-                        <small class="text-muted d-block mt-1">Check your authenticator app for the 6-digit code.</small>
+                        <input type="text" class="form-control" id="totp" name="totp" placeholder="123456" pattern="\d{6}" title="Six digit TOTP code">
+                        <label for="totp">TOTP Code (If Setup)</label>
+                        <small class="text-muted d-block mt-1">
+                            If 2FA is set up, enter your 6-digit code. New users will be redirected to setup after password validation.
+                        </small>
                     </div>
 
                     <div class="d-grid">
@@ -42,7 +44,9 @@
             </div>
             <div class="card-footer text-center bg-light">
                 <p class="mb-1">Don't have an account? <a href="{{ url_for('register') }}" class="text-primary fw-bold">Register here</a></p>
-                <p class="mb-0">Need 2FA setup? <a href="{{ url_for('setup_totp') }}" class="text-secondary">Set up TOTP</a></p>
+                <p class="mb-0">
+                    Need 2FA setup? <a href="{{ url_for('setup_totp') }}" class="text-secondary">Set up TOTP</a>
+                </p>
             </div>
         </div>
         

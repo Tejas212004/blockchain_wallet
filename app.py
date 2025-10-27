@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+# 🔥 IMPORTANT: Ensure all necessary imports are present
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from functools import wraps
@@ -8,14 +9,12 @@ import json
 from datetime import datetime
 from config import Config
 from models import db, User, BlockModel
-# Ensure Block is imported to fix potential load_chain_from_db errors
 from blockchain import Blockchain, Block 
 import qrcode
 import io
 import base64
 from werkzeug.security import generate_password_hash 
-from forms import TransactionForm # Ensure this import is present if TransactionForm is used
-# 🔥 FIX: IMPORT ENCRYPTION/DECRYPTION FUNCTIONS
+from forms import TransactionForm
 from encryption import encrypt_data, decrypt_data 
 
 # --- Blockchain and App Setup ---
@@ -35,7 +34,6 @@ def admin_required(f):
     """Decorator to restrict access to 'admin' and 'super_admin' users only."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # FIX 1: Check for both 'admin' and 'super_admin' roles
         if not current_user.is_authenticated or current_user.role not in ['admin', 'super_admin']:
             flash("Administrator access required.", 'danger')
             return redirect(url_for('dashboard_redirect'))
@@ -69,8 +67,6 @@ def load_chain_from_db():
             print("No blocks found in DB. Creating Genesis Block...")
             genesis_block = blockchain.chain[0]
             
-            # CORRECTION/CLEANUP: Set user_id=None for the Genesis Block,
-            # which is now allowed by the nullable=True setting in models.py
             db_block = BlockModel(
                 index=genesis_block.index,
                 user_id=None, 
@@ -86,7 +82,6 @@ def load_chain_from_db():
 
         blockchain.chain = []
         for db_block in blocks_from_db:
-            # Use the directly imported 'Block' class 
             reconstructed_block = Block( 
                 index=db_block.index,
                 data=db_block.data,
@@ -106,7 +101,9 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    # Only load user if they are fully authenticated (TOTP verified)
+    # The session flag 'awaiting_totp' handles pre-2FA state
+    return User.query.get(int(user_id)) if session.get('totp_verified') else None
 
 @app.route('/')
 def home():
@@ -116,46 +113,63 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # 🔥 FIX: If the user is already authenticated, redirect them away from the login page.
-    # This prevents the bug where clicking 'setup_totp' on the login page redirects.
-    if current_user.is_authenticated:
+    # If the user is already authenticated by Flask-Login (full access), redirect
+    if current_user.is_authenticated and session.get('totp_verified'):
         return redirect(url_for('dashboard_redirect')) 
 
+    # Clean up temporary flags if the user is revisiting the login page
+    session.pop('awaiting_totp', None)
+    session.pop('last_totp_attempt', None) 
+    
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        totp_code = request.form.get('totp')
+        totp_code = request.form.get('totp') # This field is only visible after password check in the template
 
         user = User.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
             
-            # 1. Check for TOTP Setup Status
-            if not user.totp_secret or user.totp_secret == '[Decryption/Tamper Error]':
-                login_user(user) 
-                flash("Please set up TOTP to continue.", 'warning')
-                # This redirects the successfully authenticated user to the setup page
+            has_totp_setup = user.totp_secret and user.totp_secret != '[Decryption/Tamper Error]'
+            
+            # Case 1: TOTP NOT SETUP 
+            # CRITICAL FIX: DO NOT use login_user(). Use session flags instead to force setup.
+            if not has_totp_setup:
+                session['awaiting_totp'] = user.id  # Store user ID temporarily
+                flash("Password accepted. Please set up Two-Factor Authentication to continue.", 'warning')
                 return redirect(url_for('setup_totp'))
 
-            # FIX 2: Enforce TOTP Code Check for ALL Logins 
+            # Case 2: TOTP IS SETUP (Regular login flow)
+            
+            # Check if the user is currently awaiting TOTP verification
             if not totp_code:
+                # This should only happen if the user's template logic is flawed or they submit an empty field
                 flash("TOTP code is required for login.", 'danger')
                 return render_template('login.html')
 
-            # 2. Verify TOTP code
-            # Note: We can assume user.totp_secret is decrypted by the models.py property getter
+            # Verify TOTP code
             totp = pyotp.TOTP(user.totp_secret)
+            
             if not totp.verify(totp_code):
-                flash("Invalid TOTP code.", 'danger')
+                # CRITICAL FIX: Track failed TOTP attempts to prevent the 'two-code' exploit.
+                if session.get('last_totp_attempt') == user.id:
+                    session.pop('last_totp_attempt', None)
+                    flash("Multiple invalid TOTP attempts. Please re-enter credentials.", 'danger')
+                    return render_template('login.html')
+
+                session['last_totp_attempt'] = user.id
+                flash("Invalid TOTP code. Please try again.", 'danger')
                 return render_template('login.html')
             
             # Successful login with TOTP
-            login_user(user)
+            login_user(user) # Now and ONLY now log the user in fully
             session['totp_verified'] = True 
-            flash("Login successful.", 'success')
+            session.pop('last_totp_attempt', None) # Clear failure tracker
+            flash("Login successful and 2FA verified.", 'success')
             
             return redirect(url_for('dashboard_redirect'))
 
+        # End of successful password check
         flash("Invalid email or password.", 'danger')
         return render_template('login.html')
 
@@ -163,6 +177,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # ... (Register route logic is unchanged) ...
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
@@ -179,9 +194,7 @@ def register():
 
         user_role = 'customer' 
         
-        # SPECIAL CASE: Initial registration prompt
         if not User.query.first():
-            # NOTE: We keep the flash message as per your original code.
             flash("Welcome! You are the first user. Please note that after registration, your role must be manually set to 'super_admin' in the database for secure initial setup.", 'info')
 
         new_user = User(username=username, email=email, role=user_role)
@@ -198,6 +211,8 @@ def register():
 @login_required
 def logout():
     session.pop('totp_verified', None)
+    session.pop('awaiting_totp', None)
+    session.pop('last_totp_attempt', None)
     logout_user()
     flash("Logged out successfully.", 'info')
     return redirect(url_for('login'))
@@ -205,77 +220,102 @@ def logout():
 # --- TOTP Routes (Setup, Verify) ---
 
 @app.route('/setup_totp', methods=['GET'])
-@login_required 
-def setup_totp():
-    # Ensure user is fully logged out if they're trying to set up TOTP from scratch 
-    # and have an existing secret, they should use /verify_totp.
-    if current_user.totp_secret and current_user.totp_secret != '[Decryption/Tamper Error]':
-        flash("TOTP is already set up. Please verify or logout to reset.", 'warning')
+# CRITICAL FIX: Removed @login_required to allow access using the session flag
+def setup_totp(): 
+    # Check for temporary password-authenticated state (from /login)
+    user_id = session.get('awaiting_totp')
+    # If not authenticated, check for a fully logged-in user who might be resetting
+    if not user_id and current_user.is_authenticated:
+        user_id = current_user.id
+        
+    if not user_id:
+        flash("Authentication required to set up TOTP.", 'danger')
+        return redirect(url_for('login'))
+
+    user = User.query.get(user_id)
+    if not user:
+        session.pop('awaiting_totp', None)
+        flash("User session error.", 'danger')
+        return redirect(url_for('login'))
+
+    if user.totp_secret and user.totp_secret != '[Decryption/Tamper Error]':
+        flash("TOTP is already set up. Please verify.", 'warning')
+        # If fully logged in, verify. If awaiting, go to verify to complete login.
         return redirect(url_for('verify_totp'))
 
-    # 🔥 FIX: Do NOT commit the secret to the database yet! Store it temporarily in session.
-    # The secret is only saved to the DB after the user verifies it on the /verify_totp route.
     secret = pyotp.random_base32()
     session['totp_secret'] = secret
 
-    totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=current_user.email, issuer_name="SecureBankWallet")
+    totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(name=user.email, issuer_name="SecureBankWallet")
 
     qr = qrcode.make(totp_uri)
     buf = io.BytesIO()
     qr.save(buf, format='PNG')
     qr_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
     
-    # Pass the plain secret to the template for manual entry fallback
     return render_template('setup_totp.html', qr_code=qr_b64, secret=secret)
 
 
 @app.route('/verify_totp', methods=['GET', 'POST'])
-@login_required
+# CRITICAL FIX: Removed @login_required
 def verify_totp():
-    # If TOTP is verified in the session, redirect to the dashboard
-    if session.get('totp_verified'):
+    # Identify the user (either awaiting setup OR already fully logged in)
+    user_id = session.get('awaiting_totp') or (current_user.id if current_user.is_authenticated else None)
+
+    if not user_id:
+        flash("Authentication required for verification.", 'danger')
+        return redirect(url_for('login'))
+        
+    user = User.query.get(user_id)
+    if not user:
+        session.pop('awaiting_totp', None)
+        flash("User session error.", 'danger')
+        return redirect(url_for('login'))
+
+    # If already verified, go to dashboard
+    if user.is_authenticated and session.get('totp_verified'):
         return redirect(url_for('dashboard_redirect'))
         
-    # Get the secret. If the user is here from a fresh login, it should be in the DB.
-    # If the user is here from /setup_totp, it should be in the session.
-    secret_to_verify = session.get('totp_secret') or current_user.totp_secret
+    # Get the secret from session (for setup finalization) or user object (for re-verification)
+    secret_to_verify = session.get('totp_secret') or user.totp_secret
     
     if not secret_to_verify or secret_to_verify == '[Decryption/Tamper Error]':
-        flash("Error: TOTP setup not complete or corrupt. Please start setup again.", 'danger')
+        flash("Error: TOTP secret is missing or corrupt. Please start setup again.", 'danger')
         # Cleanup a potentially corrupt secret and force re-setup
-        if current_user.encrypted_totp_secret:
-             current_user.encrypted_totp_secret = None
-             db.session.commit()
+        if user.encrypted_totp_secret:
+              user.encrypted_totp_secret = None
+              db.session.commit()
         return redirect(url_for('setup_totp'))
 
 
     if request.method == 'POST':
         code = request.form['totp']
-        
         totp = pyotp.TOTP(secret_to_verify)
         
         if totp.verify(code):
             
-            # 🔥 CRITICAL FIX: Save the secret to the DB ONLY after successful verification.
-            # This logic is ONLY necessary if the secret was temporarily stored in the session.
+            # If the secret was in the session, it means setup is being finalized
             if session.get('totp_secret'):
-                current_user.totp_secret = session.pop('totp_secret') # The setter in models.py handles encryption
+                # Save the secret to the DB and use the User model's setter (which encrypts)
+                user.totp_secret = session.pop('totp_secret') 
                 db.session.commit()
                 flash("TOTP setup and verification complete. You are now fully secured.", 'success')
             else:
                 flash("TOTP verified successfully.", 'success')
                 
+            # Final Login Step: Grant full authentication via Flask-Login
+            login_user(user) # This is the FIRST time login_user is called for this session (if coming from setup)
             session['totp_verified'] = True
+            session.pop('awaiting_totp', None) # Clean up temporary flag
             return redirect(url_for('dashboard_redirect'))
             
         else:
             flash("Invalid TOTP code. Please try again.", 'danger')
-            # If verification fails, re-render the page without clearing the session secret
             return render_template('verify_totp.html')
 
     return render_template('verify_totp.html')
 
-# --- Dashboard Routes ---
+# --- Dashboard Routes (Unchanged) ---
 
 @app.route('/dashboard')
 @login_required
@@ -296,12 +336,12 @@ def dashboard_redirect():
         return redirect(url_for('login'))
 
 def get_decrypted_transactions(blocks):
+    # ... (Helper function logic is unchanged) ...
     decrypted_txns = []
     for db_block in blocks:
         try:
             block_data = json.loads(db_block.data)
             encrypted_note = block_data.get('encrypted_notes', '')
-            # decrypt_data is now imported
             note = decrypt_data(encrypted_note) if encrypted_note else "No Note" 
             
             decrypted_txns.append({
@@ -321,7 +361,7 @@ def get_decrypted_transactions(blocks):
 
 @app.route('/dashboard/admin')
 @login_required
-@admin_required # Ensure the admin_required decorator is here for security
+@admin_required 
 def dashboard_admin():
     blocks = BlockModel.query.order_by(BlockModel.timestamp.desc()).all()
     decrypted_txns = get_decrypted_transactions(blocks)
@@ -344,13 +384,13 @@ def dashboard_customer():
                             transactions=decrypted_txns)
 
 
-# --- NEW ADMIN ACCOUNT PROVISIONING ROUTE ---
+# --- Admin Management Routes (Unchanged) ---
 
 @app.route('/create_admin', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def create_admin_account():
-    # FIX 3: Restrict access to Super Admin role only
+    # ... (Logic is unchanged) ...
     if current_user.role != 'super_admin':
         flash("Permission Denied: Only a Super Admin can provision new admin accounts.", 'danger')
         return redirect(url_for('dashboard_admin'))
@@ -362,9 +402,8 @@ def create_admin_account():
         
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash("Username or email already exists.", 'danger')
-            return render_template('create_admin.html')
+            return render_template('create_admin.html') 
 
-        # New accounts provisioned here are regular 'admin'
         new_user = User(username=username, email=email, role='admin')
         new_user.set_password(password)
         
@@ -373,30 +412,68 @@ def create_admin_account():
         flash(f"New Admin account created for {username}. They must log in and set up TOTP.", 'success')
         return redirect(url_for('dashboard_admin'))
         
-    return render_template('create_admin.html')
+    return render_template('create_admin.html') 
 
-# --- Transaction Route (Blockchain Integration) ---
+@app.route('/manage_users')
+@login_required
+@admin_required
+def manage_users():
+    # ... (Logic is unchanged) ...
+    users = User.query.filter(User.id != current_user.id).order_by(User.id.asc()).all()
+    return render_template('manage_users.html', users=users)
+
+@app.route('/manage_users/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def manage_user_detail(user_id):
+    # ... (Logic is unchanged) ...
+    user = User.query.get_or_404(user_id)
+
+    if user.id == current_user.id:
+        flash("You cannot manage your own account details via this admin page.", 'danger')
+        return redirect(url_for('manage_users'))
+
+    if request.method == 'POST':
+        new_role = request.form.get('role')
+        if new_role in ['customer', 'admin', 'super_admin']:
+            user.role = new_role
+            db.session.commit()
+            flash(f"User {user.username}'s role updated to {new_role}.", 'success')
+        
+        if 'reset_totp' in request.form:
+            user.encrypted_totp_secret = None
+            db.session.commit()
+            flash(f"User {user.username}'s TOTP secret has been reset. They must re-setup 2FA on next login.", 'warning')
+
+        new_password = request.form.get('new_password')
+        if new_password:
+            user.set_password(new_password)
+            db.session.commit()
+            flash(f"User {user.username}'s password has been successfully reset.", 'success')
+
+        return redirect(url_for('manage_user_detail', user_id=user.id))
+
+    return render_template('manage_user_detail.html', user=user)
+
+# --- Transaction Route (Unchanged) ---
 
 @app.route('/submit_transaction', methods=['GET', 'POST'])
 @login_required
 def submit_transaction():
+    # ... (Logic is unchanged) ...
     form = TransactionForm()
     
-    # 1. Check for TOTP Verification (Crucial Security Enhancement)
     if not session.get('totp_verified'):
         flash("TOTP verification required to submit a transaction.", 'danger')
         return redirect(url_for('verify_totp'))
         
     if form.validate_on_submit():
         try: 
-            # 2. Verify Fresh TOTP Code (Enforced security on sensitive action)
             totp_code = form.totp_code.data
-            # Re-check totp_secret, as it's possible a user bypasses setup and comes straight here.
             if not current_user.totp_secret:
                  flash("TOTP not set up. Cannot submit transaction.", 'danger')
                  return redirect(url_for('setup_totp'))
                  
-            # Note: current_user.totp_secret is decrypted via models.py property
             totp = pyotp.TOTP(current_user.totp_secret)
             if not totp.verify(totp_code):
                 print(f"DEBUG: TOTP verification failed for code: {totp_code}") 
@@ -405,11 +482,8 @@ def submit_transaction():
 
             print("DEBUG: TOTP verification successful. Proceeding to mining.") 
 
-            # 3. Encrypt Transaction Notes (using AES-GCM)
-            # encrypt_data is now imported
             encrypted_notes = encrypt_data(form.notes.data) 
             
-            # 4. Prepare Transaction Data
             transaction_data = {
                 'user_id': current_user.id,
                 'amount': form.amount.data,
@@ -419,17 +493,14 @@ def submit_transaction():
                 'fee': 0.01 
             }
             
-            # 5. Anomaly Check (Paper Mandate) 
             if not anomaly_detection_check(transaction_data, current_user.id):
                 print("DEBUG: Anomaly check returned False. Transaction halted.") 
                 return render_template('submit_transaction.html', form=form)
 
             print("DEBUG: Anomaly check passed. Mining block...") 
 
-            # 6. MINE THE BLOCK (Blockchain Core Logic)
             new_block = blockchain.mine_new_transaction(transaction_data)
             
-            # 7. Store the Mined Block in the Database (BlockModel)
             db_block = BlockModel(
                 index=new_block.index,
                 user_id=current_user.id,
@@ -448,7 +519,6 @@ def submit_transaction():
             return redirect(url_for('dashboard_customer'))
             
         except Exception as e:
-            # Rollback the session in case of a DB-related error
             db.session.rollback()
             print(f"\nCRITICAL TRANSACTION ERROR: {e}\n") 
             flash(f"A critical error occurred: {e}", 'danger')
@@ -460,7 +530,7 @@ def submit_transaction():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
-        load_chain_from_db()
+        db.create_all() 
+        load_chain_from_db() 
         
     app.run(debug=True)

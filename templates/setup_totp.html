@@ -2,52 +2,53 @@
 
 {% block content %}
 <div class="row justify-content-center mt-5">
-    <div class="col-md-8 col-lg-6">
+    <div class="col-md-8 col-lg-7">
         
-        <div class="card shadow-lg border-danger">
-            <div class="card-header bg-danger text-white text-center">
+        <div class="card shadow-lg border-warning">
+            <div class="card-header bg-warning text-dark text-center">
                 <h4 class="mb-0">
-                    <i class="fas fa-shield-alt me-2"></i> Set Up Two-Factor Authentication (2FA)
+                    <i class="fas fa-mobile-alt me-2"></i> Two-Factor Authentication (TOTP) Setup
                 </h4>
             </div>
             <div class="card-body p-4 text-center">
                 
-                <p class="lead text-muted mb-4">
-                    This security step is **required**. Please use a reliable authenticator app (e.g., Google Authenticator).
+                <h5 class="mb-3 text-primary">Step 1: Scan the QR Code</h5>
+                <p class="text-muted">
+                    Open your authenticator app (e.g., Google Authenticator, Authy) and scan the image below.
                 </p>
 
-                <h5 class="mt-4 mb-3 text-primary">1. Scan the QR Code</h5>
-                
-                <div class="d-flex justify-content-center mb-4">
-                    {% if qr_code %}
-                        <img src="data:image/png;base64,{{ qr_code }}" class="img-fluid border border-3 p-2 rounded shadow-sm" alt="TOTP QR Code" style="max-width: 250px;">
-                    {% else %}
-                        <p class="text-danger">Error: QR code data is missing.</p>
-                    {% endif %}
+                {% if qr_code %}
+                <div class="my-4 d-inline-block p-3 border border-secondary rounded bg-white">
+                    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code for TOTP Setup" style="width: 200px; height: 200px;">
                 </div>
-
-                <h5 class="mt-4 mb-3 text-primary">2. Manual Entry (If Scanning Fails)</h5>
-                
-                {% if secret %}
-                <div class="alert alert-warning p-3">
-                    <p class="mb-1">If you cannot scan, manually enter this **Secret Key**:</p>
-                    <code class="fs-5 fw-bold text-dark">{{ secret }}</code>
-                    <p class="mt-2 mb-0 small">**CRITICAL:** Save this key securely for account recovery.</p>
+                {% else %}
+                <div class="alert alert-danger" role="alert">
+                    QR Code failed to generate. Please use the manual key below.
                 </div>
                 {% endif %}
-                
-                <h5 class="mt-4 mb-3 text-primary">3. Continue to Verification</h5>
-                <p>Once you've added the account to your app, click below to verify and complete the setup.</p>
 
-                <div class="d-grid mt-4">
-                    <a href="{{ url_for('verify_totp') }}" class="btn btn-success btn-lg fw-bold">
-                        <i class="fas fa-check-circle me-2"></i> I've Added the Code — Continue
-                    </a>
+                <h5 class="mt-4 mb-3 text-primary">Step 2: Save the Secret Key</h5>
+                <p class="text-muted">
+                    If you cannot scan the code, enter the following key manually into your app. <strong class="text-danger">Save this key in a secure place.</strong>
+                </p>
+                <div class="alert alert-info py-2" role="alert">
+                    <strong style="font-size: 1.1em;">{{ secret }}</strong>
                 </div>
 
+                <hr class="my-4">
+
+                <h5 class="mb-3 text-primary">Step 3: Verification</h5>
+                <p>
+                    Once the account is added to your app, you must verify a code to complete the setup.
+                </p>
+
+                <a href="{{ url_for('verify_totp') }}" class="btn btn-success btn-lg fw-bold mt-3">
+                    <i class="fas fa-check-circle me-2"></i> Proceed to Verification
+                </a>
+                
             </div>
             <div class="card-footer text-center bg-light">
-                <p class="mb-0 small text-muted">Two-Factor Authentication significantly improves your account security.</p>
+                <p class="mb-0 text-danger">Do not leave this page until you have added the account to your authenticator app.</p>
             </div>
         </div>
         
