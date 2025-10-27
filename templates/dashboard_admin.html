@@ -16,19 +16,28 @@
     <div class="col-md-12">
         <div class="card shadow-sm border-0">
             <div class="card-body">
-                <h5 class="card-title text-primary">Administrative Utilities</h5>
+                <h5 class="card-title text-primary"><i class="fas fa-tools me-2"></i>Administrative Utilities</h5>
                 
-                {# Super Admin Link (Conditionally Displayed) #}
-                {% if user_role == 'super_admin' %}
+                <div class="d-flex flex-wrap gap-2">
+                    
+                    {# 1. User Management Link (Visible to both Admin and Super Admin for list view) #}
+                    <a href="{{ url_for('manage_users') }}" class="btn btn-outline-warning me-2">
+                        <i class="fas fa-users me-1"></i> Manage Users
+                    </a>
+
+                    {# 2. Provision Admin Link (Conditionally Displayed - Super Admin only) #}
+                    {% if user_role == 'super_admin' %}
                     <a href="{{ url_for('create_admin_account') }}" class="btn btn-outline-danger me-2">
                         <i class="fas fa-plus-circle me-1"></i> Provision New Admin Account
                     </a>
-                {% endif %}
-                
-                {# Placeholder for future utility links #}
-                <button class="btn btn-outline-info me-2" disabled>
-                    <i class="fas fa-search me-1"></i> Check Chain Integrity (Coming Soon)
-                </button>
+                    {% endif %}
+                    
+                    {# 3. Placeholder for future utility links (Chain Integrity) #}
+                    <button class="btn btn-outline-info me-2" disabled>
+                        <i class="fas fa-shield-alt me-1"></i> Check Chain Integrity (Coming Soon)
+                    </button>
+                    
+                </div>
             </div>
         </div>
     </div>
@@ -72,7 +81,6 @@
                                 {% else %}
                                     {# Regular Transaction Data #}
                                     <td>{{ txn.user_id }}</td>
-                                    {# 🔥 CHANGE: Changed currency symbol to ₹ #}
                                     <td class="fw-bold">₹{{ txn.amount }}</td> 
                                     <td>{{ txn.recipient }}</td>
                                     <td>

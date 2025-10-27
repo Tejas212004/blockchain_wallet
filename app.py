@@ -109,7 +109,7 @@ def load_user(user_id):
 def home():
     return redirect(url_for('login'))
 
-# --- Authentication Routes ---
+# --- Authentication Routes (NO CHANGES HERE) ---
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -133,17 +133,13 @@ def login():
             has_totp_setup = user.totp_secret and user.totp_secret != '[Decryption/Tamper Error]'
             
             # Case 1: TOTP NOT SETUP 
-            # CRITICAL FIX: DO NOT use login_user(). Use session flags instead to force setup.
             if not has_totp_setup:
                 session['awaiting_totp'] = user.id  # Store user ID temporarily
                 flash("Password accepted. Please set up Two-Factor Authentication to continue.", 'warning')
                 return redirect(url_for('setup_totp'))
 
             # Case 2: TOTP IS SETUP (Regular login flow)
-            
-            # Check if the user is currently awaiting TOTP verification
             if not totp_code:
-                # This should only happen if the user's template logic is flawed or they submit an empty field
                 flash("TOTP code is required for login.", 'danger')
                 return render_template('login.html')
 
@@ -151,7 +147,6 @@ def login():
             totp = pyotp.TOTP(user.totp_secret)
             
             if not totp.verify(totp_code):
-                # CRITICAL FIX: Track failed TOTP attempts to prevent the 'two-code' exploit.
                 if session.get('last_totp_attempt') == user.id:
                     session.pop('last_totp_attempt', None)
                     flash("Multiple invalid TOTP attempts. Please re-enter credentials.", 'danger')
@@ -217,10 +212,9 @@ def logout():
     flash("Logged out successfully.", 'info')
     return redirect(url_for('login'))
 
-# --- TOTP Routes (Setup, Verify) ---
+# --- TOTP Routes (Setup, Verify) (NO CHANGES HERE) ---
 
 @app.route('/setup_totp', methods=['GET'])
-# CRITICAL FIX: Removed @login_required to allow access using the session flag
 def setup_totp(): 
     # Check for temporary password-authenticated state (from /login)
     user_id = session.get('awaiting_totp')
@@ -257,7 +251,6 @@ def setup_totp():
 
 
 @app.route('/verify_totp', methods=['GET', 'POST'])
-# CRITICAL FIX: Removed @login_required
 def verify_totp():
     # Identify the user (either awaiting setup OR already fully logged in)
     user_id = session.get('awaiting_totp') or (current_user.id if current_user.is_authenticated else None)
@@ -384,13 +377,72 @@ def dashboard_customer():
                             transactions=decrypted_txns)
 
 
-# --- Admin Management Routes (Unchanged) ---
+# -----------------------------------------------
+# --- NEW: User Management Routes ---
+# -----------------------------------------------
+
+@app.route('/manage_users')
+@login_required
+@admin_required
+def manage_users():
+    # Only Super Admin can manage all users. Admin can only see the list.
+    if current_user.role not in ['super_admin', 'admin']:
+        flash("Permission Denied: Only Administrators can view this page.", 'danger')
+        return redirect(url_for('dashboard_admin'))
+
+    # Fetch all users except the current user for management list
+    users = User.query.filter(User.id != current_user.id).order_by(User.id.asc()).all()
+    
+    # Check if the current user is Super Admin to allow editing
+    can_manage = (current_user.role == 'super_admin')
+    
+    return render_template('manage_users.html', users=users, can_manage=can_manage)
+
+@app.route('/manage_users/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def manage_user_detail(user_id):
+    # Only Super Admin can access the detail page to make changes
+    if current_user.role != 'super_admin':
+        flash("Permission Denied: Only a Super Admin can modify user accounts.", 'danger')
+        return redirect(url_for('dashboard_admin'))
+
+    user = User.query.get_or_404(user_id)
+
+    if user.id == current_user.id:
+        flash("You cannot manage your own account details via this admin page.", 'danger')
+        return redirect(url_for('manage_users'))
+
+    if request.method == 'POST':
+        # 1. Change Role
+        new_role = request.form.get('role')
+        if new_role and new_role in ['customer', 'admin', 'super_admin']:
+            user.role = new_role
+            flash(f"User {user.username}'s role updated to {new_role}.", 'success')
+        
+        # 2. Reset TOTP
+        if 'reset_totp' in request.form:
+            # Setting to None will clear the encrypted secret in the database
+            user.encrypted_totp_secret = None 
+            flash(f"User {user.username}'s TOTP secret has been reset. They must re-setup 2FA on next login.", 'warning')
+
+        # 3. Reset Password (Included from your previous code)
+        new_password = request.form.get('new_password')
+        if new_password:
+            user.set_password(new_password)
+            flash(f"User {user.username}'s password has been successfully reset.", 'success')
+
+        db.session.commit()
+        return redirect(url_for('manage_user_detail', user_id=user.id))
+
+    return render_template('manage_user_detail.html', user=user)
+
+# --- Admin Provisioning Route (Now Super Admin only) ---
 
 @app.route('/create_admin', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def create_admin_account():
-    # ... (Logic is unchanged) ...
+    # Enforce Super Admin only for creating new admins
     if current_user.role != 'super_admin':
         flash("Permission Denied: Only a Super Admin can provision new admin accounts.", 'danger')
         return redirect(url_for('dashboard_admin'))
@@ -413,47 +465,7 @@ def create_admin_account():
         return redirect(url_for('dashboard_admin'))
         
     return render_template('create_admin.html') 
-
-@app.route('/manage_users')
-@login_required
-@admin_required
-def manage_users():
-    # ... (Logic is unchanged) ...
-    users = User.query.filter(User.id != current_user.id).order_by(User.id.asc()).all()
-    return render_template('manage_users.html', users=users)
-
-@app.route('/manage_users/<int:user_id>', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def manage_user_detail(user_id):
-    # ... (Logic is unchanged) ...
-    user = User.query.get_or_404(user_id)
-
-    if user.id == current_user.id:
-        flash("You cannot manage your own account details via this admin page.", 'danger')
-        return redirect(url_for('manage_users'))
-
-    if request.method == 'POST':
-        new_role = request.form.get('role')
-        if new_role in ['customer', 'admin', 'super_admin']:
-            user.role = new_role
-            db.session.commit()
-            flash(f"User {user.username}'s role updated to {new_role}.", 'success')
-        
-        if 'reset_totp' in request.form:
-            user.encrypted_totp_secret = None
-            db.session.commit()
-            flash(f"User {user.username}'s TOTP secret has been reset. They must re-setup 2FA on next login.", 'warning')
-
-        new_password = request.form.get('new_password')
-        if new_password:
-            user.set_password(new_password)
-            db.session.commit()
-            flash(f"User {user.username}'s password has been successfully reset.", 'success')
-
-        return redirect(url_for('manage_user_detail', user_id=user.id))
-
-    return render_template('manage_user_detail.html', user=user)
+# -----------------------------------------------
 
 # --- Transaction Route (Unchanged) ---
 
