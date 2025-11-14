@@ -7,7 +7,7 @@
             <i class="fas fa-user-cog me-2 text-primary"></i>Admin Dashboard
             <span class="badge bg-secondary ms-2">{{ user_role.upper() }}</span>
         </h2>
-        <p class="text-muted">Welcome, {{ username }}. You have full visibility of the network ledger.</p>
+        <p class="text-muted">Welcome, **{{ username }}**. You have full visibility of the network ledger.</p>
     </div>
 </div>
 
@@ -21,34 +21,33 @@
                 <div class="d-flex flex-wrap gap-2">
                     
                     {# 1. User Management Link (Visible to both Admin and Super Admin for list view) #}
-                    <a href="{{ url_for('manage_users') }}" class="btn btn-outline-warning me-2">
+                    <a href="{{ url_for('manage_users') }}" class="btn btn-warning me-2 fw-bold">
                         <i class="fas fa-users me-1"></i> Manage Users
                     </a>
 
                     {# 2. Provision Admin Link (Conditionally Displayed - Super Admin only) #}
                     {% if user_role == 'super_admin' %}
-                    <a href="{{ url_for('create_admin_account') }}" class="btn btn-outline-danger me-2">
+                    <a href="{{ url_for('create_admin_account') }}" class="btn btn-danger me-2 fw-bold">
                         <i class="fas fa-plus-circle me-1"></i> Provision New Admin Account
                     </a>
                     {% endif %}
                     
-                    {# 3. Placeholder for future utility links (Chain Integrity) #}
-                    <button class="btn btn-outline-info me-2" disabled>
-                        <i class="fas fa-shield-alt me-1"></i> Check Chain Integrity (Coming Soon)
-                    </button>
-                    
+                    {# 3. Placeholder for future utility links #}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+---
+
 <div class="row">
     <div class="col-12">
         <div class="card shadow-lg">
             <div class="card-header bg-dark text-white">
                 <h4 class="mb-0">
-                    <i class="fas fa-database me-2"></i> All Transactions (Blockchain Ledger)
+                    <i class="fas fa-database me-2"></i> All Transactions (Decrypted Blockchain Ledger)
+                    <span class="badge bg-light text-dark ms-2">{{ transactions|length }} Blocks</span>
                 </h4>
             </div>
             <div class="card-body p-0">
@@ -58,46 +57,59 @@
                     <table class="table table-hover table-striped mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th>Hash</th> 
-                                <th>User ID</th>
+                                <th style="width: 5%;">Block #</th>
+                                <th style="width: 15%;">Type</th>
+                                <th>Sender ID</th>
                                 <th>Amount</th>
-                                <th>Recipient</th>
-                                <th style="width: 30%;">Note (Decrypted)</th>
-                                <th>Status</th>
-                                <th>Timestamp</th>
+                                <th>Recipient Email</th>
+                                <th style="width: 20%;">Note</th>
+                                <th style="width: 15%;">Timestamp</th>
+                                <th style="width: 15%;">Hash</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for txn in transactions %}
                             <tr>
-                                <td class="text-monospace small">{{ txn.block_hash }}</td> 
+                                <td>{{ txn.index }}</td>
                                 
-                                {% if txn.user_id is none %}
-                                    {# Genesis Block Style #}
-                                    <td colspan="5" class="text-center font-italic text-muted bg-light">
-                                        --- Genesis Block (Blockchain Initializer) ---
-                                    </td>
-                                    
-                                {% else %}
-                                    {# Regular Transaction Data #}
-                                    <td>{{ txn.user_id }}</td>
-                                    <td class="fw-bold">₹{{ txn.amount }}</td> 
-                                    <td>{{ txn.recipient }}</td>
-                                    <td>
-                                        <small class="text-break">{{ txn.note }}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge 
-                                            {% if txn.status == 'complete' or txn.status == 'completed' %}bg-success
-                                            {% elif txn.status == 'pending' %}bg-warning text-dark
-                                            {% else %}bg-danger
-                                            {% endif %}">
-                                            {{ txn.status.upper() }}
-                                        </span>
-                                    </td>
-                                {% endif %}
+                                {# TRANSACTION TYPE BADGE LOGIC #}
+                                <td>
+                                    {% if txn.index == 0 %}
+                                        <span class="badge bg-info">GENESIS</span>
+                                    {% elif txn.status == 'SYSTEM_CREDIT' %}
+                                        <span class="badge bg-success"><i class="fas fa-plus-circle"></i> SYSTEM CREDIT</span>
+                                    {% elif txn.status == 'P2P_TRANSFER' %}
+                                        <span class="badge bg-primary">P2P TRANSFER</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ txn.status }}</span>
+                                    {% endif %}
+                                </td>
                                 
+                                {# SENDER ID #}
+                                <td>
+                                    {% if txn.user_id is none %}
+                                        <span class="text-muted">SYSTEM</span>
+                                    {% else %}
+                                        {{ txn.user_id }}
+                                    {% endif %}
+                                </td>
+                                
+                                {# AMOUNT #}
+                                <td class="fw-bold">
+                                    {% if txn.index == 0 %}
+                                        <span class="text-muted">N/A</span>
+                                    {% else %}
+                                        ₹{{ txn.amount }}
+                                    {% endif %}
+                                </td> 
+                                
+                                {# RECIPIENT AND NOTE #}
+                                <td><small class="text-break">{{ txn.recipient }}</small></td>
+                                <td><small class="text-break text-muted">{{ txn.note }}</small></td>
+                                
+                                {# TIMESTAMP AND HASH #}
                                 <td class="small">{{ txn.timestamp }}</td>
+                                <td class="text-monospace small text-truncate">{{ txn.block_hash[:10] }}...</td> 
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -105,11 +117,9 @@
                 </div>
             </div>
             <div class="card-footer text-muted">
-                Displaying {{ transactions|length }} blocks from the ledger.
+                Displaying **{{ transactions|length }}** blocks from the ledger.
             </div>
         </div>
     </div>
 </div>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

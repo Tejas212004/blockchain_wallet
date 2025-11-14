@@ -12,7 +12,7 @@
             </div>
             <div class="card-body p-4">
                 <p class="text-muted text-center">
-                    Only Super Admins can use this utility to delegate 'admin' roles.
+                    Only **Super Admins** can use this utility to delegate 'admin' roles.
                 </p>
 
                 <form method="POST" action="{{ url_for('create_admin_account') }}">
@@ -48,6 +48,9 @@
         
     </div>
 </div>
+{% endblock %}
 
+{% block styles %}
+{# Include Font Awesome here, or ensure it's in base.html #}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

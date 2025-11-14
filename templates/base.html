@@ -10,6 +10,17 @@
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
           crossorigin="anonymous">
     
+    {# 🔥 ADDED: Font Awesome for icons (used in create_admin.html) #}
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+          integrity="sha512-iecdLmaskl7CVJhnV+f3L2hX80U5U5w5o25L700F5k5h5y08Bv7/1p2y2x4g0w05zN5w0Y5pY1q7D1k1v1w==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+    
+    {# Define a block for child templates to add custom styles #}
+    {% block styles %}
+    {% endblock %}
+
     <style>
         body {
             /* Clean background color for the overall page */
@@ -48,7 +59,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold text-success" href="{{ url_for('home') }}">
-                Secure<span class="text-white">Wallet</span>
+                <i class="fas fa-lock me-1"></i>Secure<span class="text-white">Wallet</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -57,17 +68,31 @@
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('dashboard_redirect') }}">Dashboard</a>
+                            <a class="nav-link" href="{{ url_for('dashboard_redirect') }}"><i class="fas fa-chart-line me-1"></i>Dashboard</a>
                         </li>
+                        {# Dynamic Admin Links #}
+                        {% if current_user.role in ['admin', 'super_admin'] %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-warning" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-shield me-1"></i>Admin ({{ current_user.role }})
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                                    {% if current_user.role == 'super_admin' %}
+                                    <li><a class="dropdown-item" href="{{ url_for('create_admin_account') }}">Create Admin Account</a></li>
+                                    {% endif %}
+                                </ul>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout ({{ current_user.username }})</a>
+                            <a class="nav-link text-danger" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-1"></i>Logout ({{ current_user.username }})</a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                            <a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt me-1"></i>Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                            <a class="nav-link" href="{{ url_for('register') }}"><i class="fas fa-user-plus me-1"></i>Register</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -93,7 +118,7 @@
 
     <footer class="footer mt-auto py-3 bg-light border-top">
         <div class="container text-center">
-            <span class="text-muted">&copy; 2025 Secure Wallet Inc. | Blockchain Security System</span>
+            <span class="text-muted"><i class="far fa-copyright me-1"></i> 2025 Secure Wallet Inc. | Blockchain Security System</span>
         </div>
     </footer>
 

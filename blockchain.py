@@ -71,9 +71,12 @@ class Blockchain:
         """Wrapper to create a new block and mine it."""
         last_block = self.last_block
 
+        # 🔥 --- CORRECTION WAS HERE ---
+        # The 'data' variable is already an encrypted string from app.py.
+        # We must NOT wrap it in json.dumps() again.
         new_block = Block(
             index=last_block.index + 1,
-            data=json.dumps(data), # Transaction data is passed here
+            data=data, # Removed json.dumps(data)
             previous_hash=last_block.hash
         )
         
@@ -82,3 +85,28 @@ class Blockchain:
         self.add_block(new_block, nonce)
         
         return new_block
+
+    def is_chain_valid(self):
+        """Checks the integrity of the entire chain."""
+        # Iterate from the second block (index 1)
+        for i in range(1, len(self.chain)):
+            current_block = self.chain[i]
+            previous_block = self.chain[i-1]
+
+            # 1. Check if the block's stored hash is correct by re-computing
+            if current_block.hash != current_block.compute_hash():
+                print(f"Integrity Error: Block {i} computed hash does not match stored hash.")
+                return False
+            
+            # 2. Check if the previous hash link is correct
+            if current_block.previous_hash != previous_block.hash:
+                print(f"Integrity Error: Block {i} previous_hash does not match Block {i-1} hash.")
+                return False
+            
+            # 3. Check Proof of Work (that the hash is valid)
+            if not current_block.hash.startswith('0' * self.difficulty):
+                print(f"Integrity Error: Block {i} hash does not meet PoW difficulty.")
+                return False
+                
+        # If all blocks pass, the chain is valid
+        return True

@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-# FIX: Added SubmitField to the import list
+# 🔥TextAreaField is still used by TransactionForm, so it stays
 from wtforms import StringField, FloatField, TextAreaField, SelectField, SubmitField 
-from wtforms.validators import DataRequired, Length, Regexp
+from wtforms.validators import DataRequired, Length, Regexp, NumberRange
 
 class TransactionForm(FlaskForm):
     amount = FloatField('Amount', validators=[DataRequired()])
@@ -14,3 +14,21 @@ class TransactionForm(FlaskForm):
                             validators=[DataRequired(), Length(min=6, max=6), Regexp(r'^\d+$', message="TOTP must be digits only")])
                             
     submit = SubmitField('Send')
+
+# --- NEW: Form required for Admin Credit action (set_initial_balance) ---
+class InitialBalanceForm(FlaskForm):
+    """Form used by the Admin to manually credit a new user's wallet."""
+    # Amount must be positive
+    amount = FloatField('Amount to Credit (₹)', 
+                        validators=[
+                            DataRequired(), 
+                            NumberRange(min=1.00, message='Amount must be a positive value.')
+                        ])
+    
+    # 🔥 --- CORRECTION ---
+    # The 'note' field was removed. 
+    # It was marked as DataRequired() but was not included in the 
+    # set_initial_balance.html template, causing validation to always fail.
+    # The app.py route hardcodes this note anyway, so this field was not needed.
+    
+    submit = SubmitField('Set Initial Balance')
