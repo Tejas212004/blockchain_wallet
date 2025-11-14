@@ -10,35 +10,47 @@
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
           crossorigin="anonymous">
     
-    {# 🔥 ADDED: Font Awesome for icons (used in create_admin.html) #}
     <link rel="stylesheet" 
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
           integrity="sha512-iecdLmaskl7CVJhnV+f3L2hX80U5U5w5o25L700F5k5h5y08Bv7/1p2y2x4g0w05zN5w0Y5pY1q7D1k1v1w==" 
           crossorigin="anonymous" 
           referrerpolicy="no-referrer" />
     
-    {# Define a block for child templates to add custom styles #}
     {% block styles %}
     {% endblock %}
 
     <style>
         body {
-            /* Clean background color for the overall page */
-            background-color: #e9ecef;
+            /* 🎨 ATTRACTIVE UI: Softer, slightly darker background to make cards pop */
+            background-color: #f0f2f5;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Styling for the main content block */
         main {
             flex: 1; /* Makes sure the content pushes the footer down */
-            padding-top: 20px;
-            padding-bottom: 20px;
+        }
+
+        /* 🎨 ATTRACTIVE UI: A slightly softer, more subtle shadow for cards */
+        .card {
+            border: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05), 0 5px 15px rgba(0,0,0,0.03);
+        }
+        
+        /* 🎨 ATTRACTIVE UI: Subtle gradient for the dark navbar */
+        .navbar-dark.bg-dark-gradient {
+            background: #212529 linear-gradient(180deg, #343a40, #212529) repeat-x;
+            border-bottom: 1px solid #343a40;
         }
 
         /* Smooth Transition for professional hover effects */
-        .btn, .nav-link, .card {
+        .btn, .nav-link {
             transition: all 0.3s ease-in-out;
         }
 
@@ -54,12 +66,12 @@
         }
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold text-success" href="{{ url_for('home') }}">
-                <i class="fas fa-lock me-1"></i>Secure<span class="text-white">Wallet</span>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark-gradient shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+                <i class="fas fa-shield-halved fa-lg me-2 text-success"></i>Secure<span class="text-white">Wallet</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -111,14 +123,16 @@
         {% endif %}
     {% endwith %}
 
-    <main class="container">
+    <main class="container py-4">
         {% block content %}
         {% endblock %}
     </main>
 
-    <footer class="footer mt-auto py-3 bg-light border-top">
+    <footer class="footer mt-auto py-3 bg-dark text-white-50">
         <div class="container text-center">
-            <span class="text-muted"><i class="far fa-copyright me-1"></i> 2025 Secure Wallet Inc. | Blockchain Security System</span>
+            <small>
+                <i class="far fa-copyright me-1"></i> 2025 Secure Wallet Inc. | Blockchain Security System
+            </small>
         </div>
     </footer>
 

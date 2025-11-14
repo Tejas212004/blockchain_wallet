@@ -1,48 +1,45 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="row mt-4">
-    <div class="col-12">
-        <h2 class="mb-2 text-dark-emphasis">
-            <i class="fas fa-wallet me-2 text-success"></i> Customer Dashboard
-            <span class="badge bg-success ms-2">Customer</span>
-        </h2>
-        <p class="lead text-muted">Welcome, <span class="fw-bold">{{ username }}</span>. View and manage your financial records.</p>
-    </div>
-</div>
+{% block styles %}
+<style>
+    .bg-customer-gradient {
+        /* Uses Bootstrap's 'success' green and a lighter shade */
+        background: #198754 linear-gradient(180deg, #20c997, #198754) repeat-x;
+        color: white;
+    }
+</style>
+{% endblock %}
 
+
+{% block content %}
 <div class="row mb-4">
-    {# 1. Wallet Balance Card (NEW: Requires 'current_balance' context variable from Flask route) #}
-    <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card shadow-lg border-primary h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-coins fa-3x text-primary me-3"></i>
-                    <div>
-                        <p class="text-uppercase text-muted mb-0">Current Wallet Balance</p>
-                        {# Assumes Flask passes 'current_balance' variable #}
-                        <h3 class="mb-0 text-primary fw-bolder">
-                            ₹{{ current_balance | default('0.00') }}
-                        </h3>
-                    </div>
-                </div>
+    <div class="col-lg-8 mb-3 mb-lg-0">
+        <div class="card h-100 bg-customer-gradient text-white">
+            <div class="card-body p-4 p-md-5 d-flex flex-column justify-content-center">
+                <h2 class="display-6 fw-bold">Welcome, <span class="text-white">{{ username }}</span></h2>
+                <p class="lead text-white-75">View your balance, check your history, or start a new secure transfer.</p>
+                <a href="{{ url_for('submit_transaction') }}" class="btn btn-light btn-lg mt-3 fw-bold text-success" style="max-width: 300px;">
+                    <i class="fas fa-paper-plane me-2"></i> Send New Transaction
+                </a>
             </div>
         </div>
     </div>
-
-    {# 2. Call to Action Card: Submit New Transaction #}
-    <div class="col-md-6 col-lg-8 mb-3">
-        <div class="card shadow-lg bg-light-subtle border-success h-100">
-            <div class="card-body d-flex flex-column justify-content-center text-center p-4">
-                <h5 class="card-title text-success mb-3">
-                    <i class="fas fa-exchange-alt me-2"></i> Ready for a New Transaction?
-                </h5>
-                <p class="card-text text-muted mb-3">
-                    Click below to securely submit and mine a new transaction onto the blockchain ledger.
-                </p>
-                <a href="{{ url_for('submit_transaction') }}" class="btn btn-success btn-lg shadow-sm w-50 mx-auto">
-                    <i class="fas fa-plus me-1"></i> Submit New Transaction
-                </a>
+    
+    <div class="col-lg-4">
+        <div class="card h-100 bg-success-subtle border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start">
+                    <div class="fa-stack fa-2x me-3">
+                        <i class="fas fa-circle fa-stack-2x text-white"></i>
+                        <i class="fas fa-wallet fa-stack-1x text-success"></i>
+                    </div>
+                    <div>
+                        <p class="small text-uppercase text-muted mb-0">Current Wallet Balance</p>
+                        <h2 class="mb-0 text-success fw-bolder">
+                            ₹{{ "%.2f"|format(current_balance | default(0.00)) }}
+                        </h2>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -50,69 +47,87 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="card shadow-lg">
-            <div class="card-header bg-success text-white">
+        <div class="card">
+            <div class="card-header bg-light-subtle py-3">
                 <h4 class="mb-0">
-                    <i class="fas fa-history me-2"></i> Your Transactions (Blockchain Records)
+                    <i class="fas fa-history me-2"></i> Your Transaction History
                 </h4>
             </div>
             <div class="card-body p-0">
                 
-                {# Responsive table wrapper #}
                 <div class="table-responsive">
                     <table class="table table-hover table-striped mb-0">
-                        <thead class="table-dark">
+                        <thead class="table-light">
                             <tr>
-                                <th>Block #</th>
-                                <th>Hash</th> 
-                                <th class="text-end">Amount</th> {# Alignment fix #}
-                                <th>Recipient Email</th>
-                                <th style="width: 30%;">Note (Decrypted)</th>
+                                <th>Type</th>
+                                <th class="text-end">Amount</th>
+                                <th style="width: 30%;">Details (To/Note)</th>
                                 <th>Status</th>
                                 <th>Timestamp</th>
+                                <th>Hash</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for txn in transactions %}
-                            <tr>
-                                <td>{{ txn.index if txn.index is defined else 'N/A' }}</td>
-                                <td class="text-monospace small">{{ txn.block_hash }}</td> 
-                                <td class="fw-bold text-end">
-                                    <span class="{% if txn.user_id == current_user.id %}text-danger{% else %}text-success{% endif %}">
-                                        {% if txn.user_id == current_user.id %}-{% else %}+{% endif %}₹{{ txn.amount }}
-                                    </span>
-                                </td>
-                                <td>{{ txn.recipient }}</td>
-                                <td>
-                                    <small class="text-break">{{ txn.note }}</small>
-                                </td>
-                                <td>
-                                    <span class="badge 
-                                        {% if txn.status == 'complete' or txn.status == 'completed' %}bg-success
-                                        {% elif txn.status == 'pending' %}bg-warning text-dark
-                                        {% else %}bg-danger
-                                        {% endif %}">
-                                        {{ txn.status.upper() }}
-                                    </span>
-                                </td>
-                                <td class="small">{{ txn.timestamp }}</td>
-                            </tr>
+                                {% if txn.index > 0 %}
+                                <tr>
+                                    <td class="fw-bold">
+                                        {% if txn.type == 'DEBIT' %}
+                                            <span class="text-danger"><i class="fas fa-arrow-up me-2"></i>Sent</span>
+                                        {% elif txn.type == 'CREDIT' %}
+                                            <span class="text-success"><i class="fas fa-arrow-down me-2"></i>Received</span>
+                                        {% elif txn.type == 'SYSTEM_CREDIT' %}
+                                            <span class="text-primary"><i class="fas fa-gift me-2"></i>Credit</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="fw-bold text-end">
+                                        <span class="{% if txn.user_id == current_user.id %}text-danger{% else %}text-success{% endif %}">
+                                            {% if txn.user_id == current_user.id %}-{% else %}+{% endif %}₹{{ "%.2f"|format(txn.amount) }}
+                                        </span>
+                                    </td>
+                                    
+                                    <td>
+                                        <span class="d-block">
+                                            {% if txn.user_id == current_user.id %}
+                                                To: {{ txn.recipient }}
+                                            {% else %}
+                                                From: {% if txn.user_id %}{{ txn.user_id }}{% else %}SYSTEM{% endif %}
+                                            {% endif %}
+                                        </span>
+                                        <small class="text-muted text-break">{{ txn.note }}</small>
+                                    </td>
+                                    
+                                    <td>
+                                        <span class="badge 
+                                            {% if txn.status == 'COMPLETE' or txn.status == 'COMPLETED' %}bg-success-subtle text-success-emphasis
+                                            {% elif txn.status == 'PENDING' %}bg-warning-subtle text-warning-emphasis
+                                            {% else %}bg-danger-subtle text-danger-emphasis
+                                            {% endif %}">
+                                            {{ txn.status.upper() }}
+                                        </span>
+                                    </td>
+                                    <td class="small">{{ txn.timestamp }}</td>
+                                    <td class="font-monospace small text-truncate" style="max-width: 100px;">{{ txn.block_hash }}</td>
+                                </tr>
+                                {% endif %}
                             {% else %}
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-3">
-                                    <i class="fas fa-box-open me-1"></i> No transactions found in your account history.
-                                    {% if current_balance is not defined or current_balance|float == 0.00 %}
-                                    <p class="mt-2 mb-0">Your wallet may be empty. Please submit a new transaction to start.</p>
-                                    {% endif %}
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="text-center text-muted p-5">
+                                            <i class="fas fa-receipt fa-3x mb-3"></i>
+                                            <h5 class="mb-0">No transactions found.</h5>
+                                            <p>Your wallet history will appear here.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="card-footer text-muted">
-                Displaying **{{ transactions|length }}** transactions.
+            <div class="card-footer bg-light-subtle text-muted">
+                Displaying your transactions.
             </div>
         </div>
     </div>

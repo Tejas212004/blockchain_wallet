@@ -1,21 +1,31 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+    .bg-register-gradient {
+        background: #198754 linear-gradient(180deg, #20c997, #198754) repeat-x;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center mt-5">
+<div class="row justify-content-center">
     <div class="col-md-7 col-lg-5">
         
-        <div class="card shadow-lg border-success">
-            <div class="card-header bg-success text-white text-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-user-plus me-2"></i> Register New Account
-                </h4>
+        <div class="card">
+            
+            <div class="card-header bg-register-gradient text-white text-center p-4">
+                <i class="fas fa-user-plus fa-3x"></i>
+                <h3 class="mt-3 mb-0">Create Account</h3>
             </div>
-            <div class="card-body p-4">
+            
+            <div class="card-body p-4 p-md-5">
 
                 {% with messages = get_flashed_messages(category_filter=['info']) %}
                     {% if messages %}
-                        <div class="alert alert-info border-info text-center small mb-4">
-                            <i class="fas fa-exclamation-triangle me-1"></i> **Special Notice:** {{ messages[0] }}
+                        <div class="alert alert-info-subtle text-info-emphasis text-center small mb-4">
+                            <i class="fas fa-exclamation-triangle me-1"></i> <strong>Special Notice:</strong> {{ messages[0] }}
                         </div>
                     {% endif %}
                 {% endwith %}
@@ -49,13 +59,13 @@
                     </div>
                 </form>
             </div>
-            <div class="card-footer text-center bg-light">
-                <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}" class="text-success fw-bold">Login here</a></p>
+            
+            <div class="card-footer text-center bg-light-subtle py-3">
+                <p class="mb-0 small">Already have an account? <a href="{{ url_for('login') }}" class="text-success fw-bold">Login here</a></p>
             </div>
         </div>
         
     </div>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

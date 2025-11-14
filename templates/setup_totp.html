@@ -1,59 +1,85 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+    .bg-setup-gradient {
+        background: #ffc107 linear-gradient(180deg, #ffd75e, #ffc107) repeat-x;
+        /* Using text-dark for high contrast on the yellow background */
+        color: #343a40; 
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center mt-5">
+<div class="row justify-content-center">
     <div class="col-md-8 col-lg-7">
         
-        <div class="card shadow-lg border-warning">
-            <div class="card-header bg-warning text-dark text-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-mobile-alt me-2"></i> Two-Factor Authentication (TOTP) Setup
-                </h4>
+        <div class="card">
+            
+            <div class="card-header bg-setup-gradient text-dark text-center p-4">
+                <i class="fas fa-mobile-screen-button fa-3x"></i>
+                <h3 class="mt-3 mb-0">Two-Factor Authentication</h3>
             </div>
-            <div class="card-body p-4 text-center">
-                
-                <h5 class="mb-3 text-primary">Step 1: Scan the QR Code</h5>
-                <p class="text-muted">
-                    Open your authenticator app (e.g., Google Authenticator, Authy) and scan the image below.
-                </p>
+            
+            <div class="card-body p-4 p-md-5">
 
-                {% if qr_code %}
-                <div class="my-4 d-inline-block p-3 border border-secondary rounded bg-white">
-                    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code for TOTP Setup" style="width: 200px; height: 200px;">
-                </div>
-                {% else %}
-                <div class="alert alert-danger" role="alert">
-                    QR Code failed to generate. Please use the manual key below.
-                </div>
-                {% endif %}
+                <div class="text-center">
+                    <h5 class="mb-2 text-primary">Step 1: Scan QR Code</h5>
+                    <p class="text-muted">
+                        Open your authenticator app (e.g., Google Authenticator, Authy) and scan the image below.
+                    </p>
 
-                <h5 class="mt-4 mb-3 text-primary">Step 2: Save the Secret Key</h5>
-                <p class="text-muted">
-                    If you cannot scan the code, enter the following key manually into your app. <strong class="text-danger">Save this key in a secure place.</strong>
-                </p>
-                <div class="alert alert-info py-2" role="alert">
-                    <strong style="font-size: 1.1em;">{{ secret }}</strong>
+                    {% if qr_code %}
+                    <div class="my-3 d-inline-block p-3 border border-secondary rounded bg-white">
+                        <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code for TOTP Setup" style="width: 200px; height: 200px;">
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger" role="alert">
+                        QR Code failed to generate. Please use the manual key below.
+                    </div>
+                    {% endif %}
                 </div>
 
                 <hr class="my-4">
 
-                <h5 class="mb-3 text-primary">Step 3: Verification</h5>
-                <p>
-                    Once the account is added to your app, you must verify a code to complete the setup.
-                </p>
+                <div class="text-center">
+                    <h5 class="mb-2 text-primary">Step 2: Manual Setup (If Needed)</h5>
+                    <p class="text-muted">
+                        If you cannot scan the code, enter the following key manually into your app.
+                    </p>
+                    <div class="alert bg-secondary-subtle text-secondary-emphasis py-2" role="alert">
+                        <strong class="font-monospace" style="font-size: 1.1em;">{{ secret }}</strong>
+                    </div>
+                    <p class="text-danger small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong class="text-danger">Save this key in a secure place.</strong> It is required for account recovery.
+                    </p>
+                </div>
+                
+                <hr class="my-4">
 
-                <a href="{{ url_for('verify_totp') }}" class="btn btn-success btn-lg fw-bold mt-3">
-                    <i class="fas fa-check-circle me-2"></i> Proceed to Verification
-                </a>
+                <div class="text-center">
+                    <h5 class="mb-2 text-primary">Step 3: Verify Code</h5>
+                    <p class="text-muted">
+                        Once the account is added to your app, you must verify a code to complete the setup.
+                    </p>
+
+                    <a href="{{ url_for('verify_totp') }}" class="btn btn-success btn-lg fw-bold mt-2">
+                        <i class="fas fa-check-circle me-2"></i> Proceed to Verification
+                    </a>
+                </div>
                 
             </div>
-            <div class="card-footer text-center bg-light">
-                <p class="mb-0 text-danger">Do not leave this page until you have added the account to your authenticator app.</p>
+            
+            <div class="card-footer text-center bg-light-subtle py-3">
+                <p class="mb-0 text-danger small fw-bold">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    Do not leave this page until you have saved your secret key or scanned the code.
+                </p>
             </div>
         </div>
         
     </div>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

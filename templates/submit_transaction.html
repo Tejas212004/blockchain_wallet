@@ -1,25 +1,32 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+    .bg-customer-gradient {
+        background: #198754 linear-gradient(180deg, #20c997, #198754) repeat-x;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center mt-5">
+<div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
         
-        <div class="card shadow-lg border-primary">
-            <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-arrow-circle-right me-2"></i> Submit New Transaction
-                </h4>
+        <div class="card">
+            
+            <div class="card-header bg-customer-gradient text-white text-center p-4">
+                <i class="fas fa-paper-plane fa-3x"></i>
+                <h3 class="mt-3 mb-1">New Transaction</h3>
+                <p class="text-white-75 mb-0">Securely send funds to another user.</p>
             </div>
-            <div class="card-body p-5">
-                
-                <p class="lead text-muted text-center mb-4">
-                    Complete the details below. A valid **2FA code is required** to sign and mine this transaction onto the blockchain.
-                </p>
 
+            <div class="card-body p-4 p-md-5">
+                
                 <form method="POST" action="{{ url_for('submit_transaction') }}">
                     {{ form.hidden_tag() }}
 
-                    <h5 class="text-primary mb-3"><i class="fas fa-file-invoice-dollar me-1"></i> Transaction Details</h5>
+                    <h5 class="text-success mb-3"><i class="fas fa-file-invoice-dollar me-1"></i> Transaction Details</h5>
                     
                     <div class="form-floating mb-3">
                         {{ form.amount(class="form-control", id="amount", placeholder="e.g., 8500.00", required=true) }}
@@ -37,17 +44,17 @@
                         {% endfor %}
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label for="notes" class="fw-bold mb-2">Notes (Will be Encrypted on Blockchain):</label>
-                        {{ form.notes(class="form-control", rows=3, id="notes", placeholder="Purpose of transaction") }}
+                    <div class="form-floating mb-3">
+                        {{ form.notes(class="form-control", id="notes", placeholder="Purpose of transaction", style="height: 100px") }}
+                        <label for="notes">Notes (Will be Encrypted)</label>
                         {% for error in form.notes.errors %}
                             <span class="text-danger small d-block mt-1">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="form-group mb-4">
-                        <label for="status" class="fw-bold mb-2">Status:</label>
+                    <div class="form-floating mb-4">
                         {{ form.status(class="form-select", id="status") }}
+                        <label for="status">Status</label>
                         {% for error in form.status.errors %}
                             <span class="text-danger small d-block mt-1">{{ error }}</span>
                         {% endfor %}
@@ -58,7 +65,7 @@
                     <h5 class="text-danger mb-3"><i class="fas fa-shield-alt me-1"></i> Security Verification</h5>
                     
                     <div class="form-floating mb-4">
-                        {{ form.totp_code(class="form-control", id="totp_code", placeholder="123456", size=6, maxlength=6, pattern="\d{6}", title="Six digit TOTP code", required=true) }}
+                        {{ form.totp_code(class="form-control", id="totp_code", placeholder="123456", size=6, maxlength=6, pattern="\\d{6}", title="Six digit TOTP code", required=true) }}
                         <label for="totp_code">2FA/TOTP Code (Required to Sign Transaction)</label>
                         {% for error in form.totp_code.errors %}
                             <span class="text-danger small d-block mt-1">{{ error }}</span>
@@ -66,12 +73,12 @@
                     </div>
                     
                     <div class="d-grid mt-4">
-                        {{ form.submit(class="btn btn-primary btn-lg fw-bold") }}
+                        {{ form.submit(class="btn btn-success btn-lg fw-bold") }}
                     </div>
                 </form>
             </div>
-            <div class="card-footer text-center bg-light">
-                <a href="{{ url_for('dashboard_customer') }}" class="text-secondary text-decoration-none">
+            <div class="card-footer text-center bg-light-subtle py-3">
+                <a href="{{ url_for('dashboard_customer') }}" class="text-muted text-decoration-none small">
                     <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
                 </a>
             </div>
@@ -80,5 +87,4 @@
     </div>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

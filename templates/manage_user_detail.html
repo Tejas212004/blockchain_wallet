@@ -1,75 +1,109 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-8 col-lg-7">
-        <h2 class="mb-4 text-primary"><i class="fas fa-user-shield me-2"></i>Manage User: {{ user.username }}</h2>
+{% block styles %}
+<style>
+    .bg-login-gradient {
+        background: #0d6efd linear-gradient(180deg, #338bff, #0d6efd) repeat-x;
+        color: white;
+    }
+</style>
+{% endblock %}
 
-        <div class="card shadow-lg border-primary mb-4">
-            <div class="card-header bg-primary text-white">
-                User Details
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9 col-lg-8">
+        
+        <div class="card mb-4">
+            <div class="card-header bg-login-gradient text-white p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0 text-white">
+                        <i class="fas fa-user-pen me-2"></i>Manage User: {{ user.username }}
+                    </h3>
+                    <a href="{{ url_for('manage_users') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to User List
+                    </a>
+                </div>
             </div>
             <div class="card-body">
-                <p><strong>ID:</strong> {{ user.id }}</p>
-                <p><strong>Email:</strong> {{ user.email }}</p>
-                <p><strong>Current Role:</strong> <span class="badge bg-{{ 'danger' if user.role == 'super_admin' else ('warning' if user.role == 'admin' else 'secondary') }}">{{ user.role.upper() }}</span></p>
-                <p>
-                    <strong>TOTP Status:</strong> 
-                    {% if user.encrypted_totp_secret %}
-                    <span class="text-success"><i class="fas fa-check-circle me-1"></i> Setup</span>
-                    {% else %}
-                    <span class="text-danger"><i class="fas fa-times-circle me-1"></i> Not Setup</span>
-                    {% endif %}
-                </p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">ID:</span>
+                        <strong>{{ user.id }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Email:</span>
+                        <strong>{{ user.email }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Current Role:</span>
+                        <span class="badge fs-6 {% if user.role == 'super_admin' %}bg-danger-subtle text-danger-emphasis{% elif user.role == 'admin' %}bg-warning-subtle text-warning-emphasis{% else %}bg-secondary-subtle text-secondary-emphasis{% endif %}">
+                            {{ user.role.upper() }}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="text-muted">TOTP Status:</span>
+                        <span>
+                            {% if user.encrypted_totp_secret %}
+                                <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> Setup</span>
+                            {% else %}
+                                <span class="text-danger fw-bold"><i class="fas fa-times-circle me-1"></i> Not Setup</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
             </div>
         </div>
 
         <form method="POST">
-            <div class="card shadow-lg border-warning mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <i class="fas fa-user-tag me-2"></i> Change Role
+            <div class="card">
+                <div class="card-header bg-light-subtle py-3">
+                    <h5 class="mb-0">Admin Actions</h5>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="role" class="form-label">New Role</label>
-                        <select class="form-select" id="role" name="role" required>
-                            <option value="customer" {% if user.role == 'customer' %}selected{% endif %}>Customer</option>
-                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
-                            {% if current_user.role == 'super_admin' %}
-                            <option value="super_admin" {% if user.role == 'super_admin' %}selected{% endif %}>Super Admin</option>
-                            {% endif %}
-                        </select>
+                <div class="card-body p-4">
+                    <nav>
+                        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                            <button class="nav-link active" id="nav-role-tab" data-bs-toggle="tab" data-bs-target="#nav-role" type="button" role="tab" aria-controls="nav-role" aria-selected="true">
+                                <i class="fas fa-user-tag me-2"></i>Change Role
+                            </button>
+                            <button class="nav-link" id="nav-pass-tab" data-bs-toggle="tab" data-bs-target="#nav-pass" type="button" role="tab" aria-controls="nav-pass" aria-selected="false">
+                                <i class="fas fa-key me-2"></i>Reset Password
+                            </button>
+                            <button class="nav-link" id="nav-totp-tab" data-bs-toggle="tab" data-bs-target="#nav-totp" type="button" role="tab" aria-controls="nav-totp" aria-selected="false">
+                                <i class="fas fa-mobile-screen-button me-2"></i>Reset TOTP
+                            </button>
+                        </div>
+                    </nav>
+                    
+                    <div class="tab-content pt-4" id="nav-tabContent">
+                        
+                        <div class="tab-pane fade show active" id="nav-role" role="tabpanel" aria-labelledby="nav-role-tab">
+                            <label for="role" class="form-label">New Role</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="customer" {% if user.role == 'customer' %}selected{% endif %}>Customer</option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                                {% if current_user.role == 'super_admin' %}
+                                <option value="super_admin" {% if user.role == 'super_admin' %}selected{% endif %}>Super Admin</option>
+                                {% endif %}
+                            </select>
+                            <button type="submit" class="btn btn-warning mt-3"><i class="fas fa-sync-alt me-2"></i>Update Role</button>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="nav-pass" role="tabpanel" aria-labelledby="nav-pass-tab">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Enter new password">
+                            <small class="text-muted">Only fill this field to reset the user's password.</small>
+                            <button type="submit" class="btn btn-danger mt-3"><i class="fas fa-lock me-2"></i>Reset Password</button>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="nav-totp" role="tabpanel" aria-labelledby="nav-totp-tab">
+                            <p class="text-muted">This will clear the user's 2FA secret, forcing them to re-register TOTP on their next login attempt.</p>
+                            <button type="submit" name="reset_totp" value="true" class="btn btn-info"><i class="fas fa-history me-2"></i>Force TOTP Reset</button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-warning"><i class="fas fa-sync-alt me-2"></i>Update Role</button>
-                </div>
-            </div>
-
-            <div class="card shadow-lg border-danger mb-4">
-                <div class="card-header bg-danger text-white">
-                    <i class="fas fa-key me-2"></i> Reset Password
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="new_password" class="form-label">New Password</label>
-                        <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Enter new password">
-                        <small class="text-muted">Only fill this field to reset the user's password.</small>
-                    </div>
-                    <button type="submit" class="btn btn-danger"><i class="fas fa-lock me-2"></i>Reset Password</button>
-                </div>
-            </div>
-
-            <div class="card shadow-lg border-info mb-4">
-                <div class="card-header bg-info text-white">
-                    <i class="fas fa-times-circle me-2"></i> Reset TOTP
-                </div>
-                <div class="card-body">
-                    <p class="text-muted">This will clear the user's 2FA secret, forcing them to re-register TOTP on their next login attempt.</p>
-                    <button type="submit" name="reset_totp" value="true" class="btn btn-info"><i class="fas fa-history me-2"></i>Force TOTP Reset</button>
                 </div>
             </div>
         </form>
 
-        <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary mt-3"><i class="fas fa-arrow-left me-2"></i>Back to User List</a>
     </div>
 </div>
 {% endblock %}

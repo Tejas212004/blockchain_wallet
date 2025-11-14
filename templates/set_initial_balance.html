@@ -1,63 +1,84 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            
-            <h2 class="mb-4 text-success"><i class="fas fa-coins me-2"></i>Set Customer Initial Balance</h2>
-            <p class="text-muted">This action creates a **system-generated credit block** in the blockchain, bypassing the normal transaction flow. Use with caution.</p>
+{% block styles %}
+<style>
+    .bg-login-gradient {
+        background: #0d6efd linear-gradient(180deg, #338bff, #0d6efd) repeat-x;
+        color: white;
+    }
+</style>
+{% endblock %}
 
-            <div class="card shadow-lg mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Customer Details</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Customer ID:</strong> {{ customer.id }}</p>
-                    <p><strong>Email:</strong> {{ customer.email }}</p>
-                    <p class="h4">
-                        <strong>Current Balance:</strong> 
-                        <span class="text-primary">₹{{ current_balance | default('0.00') }}</span>
-                    </p>
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        
+        <div class="card">
+            <div class="card-header bg-login-gradient text-white p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1 text-white"><i class="fas fa-coins me-2"></i>Set Initial Balance</h4>
+                        <p class="text-white-75 small mb-0">System credit for {{ customer.email }}</p>
+                    </div>
+                    <a href="{{ url_for('manage_users') }}" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back
+                    </a>
                 </div>
             </div>
+            
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('set_initial_balance', user_id=customer.id) }}">
+                    
+                    {{ form.csrf_token }} 
+                    
+                    <h5 class="mb-3">User Details</h5>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Customer ID:</span>
+                            <strong>{{ customer.id }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Email:</span>
+                            <strong>{{ customer.email }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span class="text-muted">Current Balance:</span>
+                            <strong class="h5 mb-0 text-primary">
+                                ₹{{ "%.2f"|format(current_balance | default(0.00)) }}
+                            </strong>
+                        </li>
+                    </ul>
 
-            <div class="card shadow">
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('set_initial_balance', user_id=customer.id) }}">
-                        
-                        <!-- CRITICAL FIX 1: CSRF Token must be included -->
-                        {{ form.csrf_token }} 
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.amount.id }}" class="form-label fw-bold">Amount to Credit (Initial Balance)</label>
-                            <div class="input-group">
-                                <span class="input-group-text">₹</span>
-                                
-                                <!-- CRITICAL FIX 2: Render the Flask-WTF field directly -->
-                                {{ form.amount(class="form-control form-control-lg", 
-                                               step="0.01", 
-                                               min="0.01", 
-                                               placeholder="e.g., 5000.00") }}
+                    <hr class="my-4">
 
-                            </div>
-                            <div class="form-text text-muted">Enter the amount to be added to the customer's wallet. This must be a positive number.</div>
+                    <h5 class="mb-3">Amount to Credit</h5>
+                    <p class="text-muted small">This action creates a system-generated credit block. Use with caution.</p>
+
+                    <div class="mb-3">
+                        <label for="{{ form.amount.id }}" class="form-label fw-bold">Amount to Credit</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
                             
-                            <!-- Display validation errors for the amount field -->
-                            {% for error in form.amount.errors %}
-                                <div class="alert alert-danger mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
+                            {{ form.amount(class="form-control form-control-lg", 
+                                            step="0.01", 
+                                            min="0.01", 
+                                            placeholder="e.g., 5000.00") }}
 
-                        <!-- CRITICAL FIX 3: Render the submit button generated by the form -->
-                        <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
+                        </div>
+                        <div class="form-text text-muted">Enter the amount to be added to the customer's wallet.</div>
+                        
+                        {% for error in form.amount.errors %}
+                            <div class="alert alert-danger mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg mt-3">
                             <i class="fas fa-plus-circle me-2"></i>Confirm Initial Credit
                         </button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
-
-            <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary mt-4"><i class="fas fa-arrow-left me-2"></i>Back to User Management</a>
         </div>
     </div>
 </div>

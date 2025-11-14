@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
+<div class="row justify-content-center">
     <div class="col-md-7 col-lg-5">
         
-        <div class="card shadow-lg border-primary">
-            <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-lock me-2"></i> Secure Wallet Login
-                </h4>
-            </div>
-            <div class="card-body p-4">
-                <p class="text-muted text-center mb-4">
-                    Please log in with your credentials and required TOTP code.
-                </p>
+        <div class="card">
+            
+            <div class="card-body p-5">
+                
+                <div class="text-center mb-4">
+                    <i class="fas fa-lock fa-3x text-primary"></i>
+                    <h3 class="mt-3 mb-1">Secure Wallet Login</h3>
+                    <p class="text-muted">
+                        Please log in with your credentials.
+                    </p>
+                </div>
 
                 <form method="POST" action="{{ url_for('login') }}">
                     
@@ -31,7 +32,7 @@
                         <input type="text" class="form-control" id="totp" name="totp" placeholder="123456" pattern="\d{6}" title="Six digit TOTP code">
                         <label for="totp">TOTP Code (If Setup)</label>
                         <small class="text-muted d-block mt-1">
-                            If 2FA is set up, enter your 6-digit code. New users will be redirected to setup after password validation.
+                            New users will be redirected to setup 2FA.
                         </small>
                     </div>
 
@@ -42,10 +43,10 @@
                     </div>
                 </form>
             </div>
-            <div class="card-footer text-center bg-light">
-                <p class="mb-1">Don't have an account? <a href="{{ url_for('register') }}" class="text-primary fw-bold">Register here</a></p>
-                <p class="mb-0">
-                    Need 2FA setup? <a href="{{ url_for('setup_totp') }}" class="text-secondary">Set up TOTP</a>
+            <div class="card-footer text-center bg-light-subtle py-3">
+                <p class="mb-1 small">Don't have an account? <a href="{{ url_for('register') }}" class="text-primary fw-bold">Register here</a></p>
+                <p class="mb-0 small">
+                    <a href="{{ url_for('setup_totp') }}" class="text-secondary">Need 2FA setup?</a>
                 </p>
             </div>
         </div>
@@ -53,5 +54,4 @@
     </div>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

@@ -1,66 +1,78 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+    .bg-admin-gradient {
+        background: #0d6efd linear-gradient(180deg, #338bff, #0d6efd) repeat-x;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+
 {% block content %}
-<div class="row mt-4">
-    <div class="col-12">
-        <h2 class="mb-4 text-dark-emphasis">
-            <i class="fas fa-user-cog me-2 text-primary"></i>Admin Dashboard
-            <span class="badge bg-secondary ms-2">{{ user_role.upper() }}</span>
-        </h2>
-        <p class="text-muted">Welcome, **{{ username }}**. You have full visibility of the network ledger.</p>
-    </div>
-</div>
-
-<div class="row mb-4">
-    {# Display Admin Links in a Card #}
-    <div class="col-md-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h5 class="card-title text-primary"><i class="fas fa-tools me-2"></i>Administrative Utilities</h5>
-                
-                <div class="d-flex flex-wrap gap-2">
-                    
-                    {# 1. User Management Link (Visible to both Admin and Super Admin for list view) #}
-                    <a href="{{ url_for('manage_users') }}" class="btn btn-warning me-2 fw-bold">
-                        <i class="fas fa-users me-1"></i> Manage Users
-                    </a>
-
-                    {# 2. Provision Admin Link (Conditionally Displayed - Super Admin only) #}
-                    {% if user_role == 'super_admin' %}
-                    <a href="{{ url_for('create_admin_account') }}" class="btn btn-danger me-2 fw-bold">
-                        <i class="fas fa-plus-circle me-1"></i> Provision New Admin Account
-                    </a>
-                    {% endif %}
-                    
-                    {# 3. Placeholder for future utility links #}
-                </div>
+<div class="card bg-admin-gradient text-white mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1 text-white">
+                    <i class="fas fa-shield-alt me-2"></i>Admin Dashboard
+                    <span class="badge bg-light text-primary align-middle ms-2">{{ user_role.upper() }}</span>
+                </h2>
+                <p class="text-white-75 mb-0">Welcome, <strong class.="fw-bold">{{ username }}</strong>. You have full visibility of the network ledger.</p>
+            </div>
+            
+            <div class="d-flex flex-wrap gap-2 mt-3 mt-md-0">
+                <a href="{{ url_for('check_integrity') }}" class="btn btn-outline-light">
+                    <i class="fas fa-check-double me-1"></i> Run Integrity Check
+                </a>
+                <a href="{{ url_for('manage_users') }}" class="btn btn-outline-light">
+                    <i class="fas fa-users-cog me-1"></i> Manage Users
+                </a>
+                {% if user_role == 'super_admin' %}
+                <a href="{{ url_for('create_admin_account') }}" class="btn btn-light">
+                    <i class="fas fa-plus-circle me-1 text-primary"></i> Provision Admin
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
----
-
 <div class="row">
     <div class="col-12">
-        <div class="card shadow-lg">
-            <div class="card-header bg-dark text-white">
-                <h4 class="mb-0">
-                    <i class="fas fa-database me-2"></i> All Transactions (Decrypted Blockchain Ledger)
-                    <span class="badge bg-light text-dark ms-2">{{ transactions|length }} Blocks</span>
-                </h4>
+        <div class="card">
+            <div class="card-header bg-light-subtle py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-database me-2"></i> All Transactions
+                    </h4>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis fs-6">
+                        {{ transactions|length }} Blocks
+                    </span>
+                </div>
             </div>
             <div class="card-body p-0">
                 
-                {# Responsive table wrapper #}
-                <div class="table-responsive">
+                <div class{
+type: 'ToolCall',
+id: 'tool_call_v68mPw',
+functionName: 'google:search',
+args: {
+queries: [
+'git push origin main error: failed to push some refs to'
+]
+}
+}
+}
+>="table-responsive">
                     <table class="table table-hover table-striped mb-0">
-                        <thead class="table-dark">
+                        <thead class="table-light">
                             <tr>
                                 <th style="width: 5%;">Block #</th>
                                 <th style="width: 15%;">Type</th>
                                 <th>Sender ID</th>
-                                <th>Amount</th>
+                                <th class="text-end">Amount</th>
                                 <th>Recipient Email</th>
                                 <th style="width: 20%;">Note</th>
                                 <th style="width: 15%;">Timestamp</th>
@@ -72,20 +84,18 @@
                             <tr>
                                 <td>{{ txn.index }}</td>
                                 
-                                {# TRANSACTION TYPE BADGE LOGIC #}
                                 <td>
                                     {% if txn.index == 0 %}
-                                        <span class="badge bg-info">GENESIS</span>
-                                    {% elif txn.status == 'SYSTEM_CREDIT' %}
-                                        <span class="badge bg-success"><i class="fas fa-plus-circle"></i> SYSTEM CREDIT</span>
-                                    {% elif txn.status == 'P2P_TRANSFER' %}
-                                        <span class="badge bg-primary">P2P TRANSFER</span>
+                                        <span class="badge bg-info-subtle text-info-emphasis">GENESIS</span>
+                                    {% elif txn.type == 'INITIAL_CREDIT' %}
+                                        <span class="badge bg-success-subtle text-success-emphasis"><i class="fas fa-plus-circle me-1"></i> SYSTEM CREDIT</span>
+                                    {% elif txn.type == 'P2P' %}
+                                        <span class="badge bg-primary-subtle text-primary-emphasis">P2P TRANSFER</span>
                                     {% else %}
-                                        <span class="badge bg-danger">{{ txn.status }}</span>
+                                        <span class="badge bg-danger-subtle text-danger-emphasis">{{ txn.type | default('UNKNOWN') }}</span>
                                     {% endif %}
                                 </td>
                                 
-                                {# SENDER ID #}
                                 <td>
                                     {% if txn.user_id is none %}
                                         <span class="text-muted">SYSTEM</span>
@@ -94,30 +104,27 @@
                                     {% endif %}
                                 </td>
                                 
-                                {# AMOUNT #}
-                                <td class="fw-bold">
+                                <td class="fw-bold text-end">
                                     {% if txn.index == 0 %}
                                         <span class="text-muted">N/A</span>
                                     {% else %}
-                                        ₹{{ txn.amount }}
+                                        ₹{{ "%.2f"|format(txn.amount) }}
                                     {% endif %}
                                 </td> 
                                 
-                                {# RECIPIENT AND NOTE #}
                                 <td><small class="text-break">{{ txn.recipient }}</small></td>
                                 <td><small class="text-break text-muted">{{ txn.note }}</small></td>
                                 
-                                {# TIMESTAMP AND HASH #}
                                 <td class="small">{{ txn.timestamp }}</td>
-                                <td class="text-monospace small text-truncate">{{ txn.block_hash[:10] }}...</td> 
+                                <td class="font-monospace small text-truncate" style="max-width: 100px;">{{ txn.block_hash }}</td> 
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="card-footer text-muted">
-                Displaying **{{ transactions|length }}** blocks from the ledger.
+            <div class="card-footer bg-light-subtle text-muted">
+                Displaying <strong>{{ transactions|length }}</strong> blocks from the ledger.
             </div>
         </div>
     </div>

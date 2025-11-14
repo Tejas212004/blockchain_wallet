@@ -1,19 +1,27 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style>
+    .bg-login-gradient {
+        background: #0d6efd linear-gradient(180deg, #338bff, #0d6efd) repeat-x;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center mt-5">
+<div class="row justify-content-center">
     <div class="col-md-7 col-lg-5">
         
-        <div class="card shadow-lg border-primary">
-            <div class="card-header bg-primary text-white text-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-user-shield me-2"></i>Provision New Admin Account
-                </h4>
+        <div class="card">
+            
+            <div class="card-header bg-login-gradient text-white text-center p-4">
+                <i class="fas fa-user-shield fa-3x"></i>
+                <h3 class="mt-3 mb-1">Provision Admin</h3>
+                <p class="text-white-75 mb-0">Create a new 'admin' account.</p>
             </div>
-            <div class="card-body p-4">
-                <p class="text-muted text-center">
-                    Only **Super Admins** can use this utility to delegate 'admin' roles.
-                </p>
+            
+            <div class="card-body p-4 p-md-5">
 
                 <form method="POST" action="{{ url_for('create_admin_account') }}">
                     
@@ -34,13 +42,13 @@
 
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg fw-bold">
-                            Create Admin Account
+                            <i class="fas fa-plus-circle me-2"></i> Create Admin Account
                         </button>
                     </div>
                 </form>
             </div>
-            <div class="card-footer text-center bg-light">
-                <a href="{{ url_for('dashboard_admin') }}" class="text-secondary text-decoration-none">
+            <div class="card-footer text-center bg-light-subtle py-3">
+                <a href="{{ url_for('dashboard_admin') }}" class="text-muted text-decoration-none small">
                     <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
                 </a>
             </div>
@@ -48,9 +56,4 @@
         
     </div>
 </div>
-{% endblock %}
-
-{% block styles %}
-{# Include Font Awesome here, or ensure it's in base.html #}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}

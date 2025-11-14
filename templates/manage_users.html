@@ -1,82 +1,99 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-12">
-            <h2 class="mb-4 text-primary"><i class="fas fa-users-cog me-2"></i>User Management</h2>
-            
-            <p class="text-muted">Admins and Super Admins can set the initial balance for **Customer** accounts. Only **Super Admins** can set the initial balance for **Admin** accounts.</p>
+{% block styles %}
+<style>
+    .bg-login-gradient {
+        background: #0d6efd linear-gradient(180deg, #338bff, #0d6efd) repeat-x;
+        color: white;
+    }
+</style>
+{% endblock %}
 
-            <div class="table-responsive">
-                <table class="table table-striped table-hover shadow-sm">
-                    <thead class="bg-primary text-white">
-                        <tr>
-                            <th>ID</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th class="text-end">Wallet Balance</th>
-                            <th>TOTP Status</th>
-                            <th style="width: 20%;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr>
-                            <td>{{ user.id }}</td>
-                            <td>{{ user.email }}</td>
-                            <td><span class="badge bg-{{ 'danger' if user.role == 'super_admin' else ('warning' if user.role == 'admin' else 'secondary') }}">{{ user.role.upper() }}</span></td>
-                            
-                            {# Display User Balance (Always shows for all users as per the updated app.py logic) #}
-                            <td class="text-end fw-bold">
-                                {% if user.balance is not none %}
-                                    <span class="text-success">₹{{ user.balance | default('0.00') }}</span>
-                                {% else %}
-                                    <span class="text-muted">N/A</span>
-                                {% endif %}
-                            </td>
-                            
-                            <td>
-                                {% if user.encrypted_totp_secret %}
-                                <i class="fas fa-check-circle text-success me-1"></i> Setup
-                                {% else %}
-                                <i class="fas fa-times-circle text-danger me-1"></i> Not Setup
-                                {% endif %}
-                            </td>
-                            <td>
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-login-gradient text-white p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-1 text-white"><i class="fas fa-users-cog me-2"></i>User Management</h3>
+                        <p class="text-white-75 mb-0 small">Credit customer accounts or manage admin/customer roles and security.</p>
+                    </div>
+                    <a href="{{ url_for('dashboard_admin') }}" class="btn btn-outline-light mt-2 mt-md-0">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th class="text-end">Wallet Balance</th>
+                                <th class="text-center">TOTP Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <span class="badge fs-6 {% if user.role == 'super_admin' %}bg-danger-subtle text-danger-emphasis{% elif user.role == 'admin' %}bg-warning-subtle text-warning-emphasis{% else %}bg-secondary-subtle text-secondary-emphasis{% endif %}">
+                                        {{ user.role.upper() }}
+                                    </span>
+                                </td>
                                 
-                                {% if current_user.role == 'super_admin' %}
-                                    {# 1. Super Admin Management Button (for roles/security resets) #}
-                                    <a href="{{ url_for('manage_user_detail', user_id=user.id) }}" class="btn btn-sm btn-info me-1">
-                                        <i class="fas fa-edit"></i> Manage
-                                    </a>
-                                {% endif %}
+                                <td class="text-end fw-bold">
+                                    {% if user.balance is not none %}
+                                        <span class="text-success">₹{{ "%.2f"|format(user.balance) }}</span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
                                 
-                                {# 2. Credit Button Logic: #}
-                                {% if user.role != 'super_admin' and user.id != current_user.id %}
-                                    
-                                    {% if user.role == 'customer' and current_user.role in ['admin', 'super_admin'] %}
-                                    <a href="{{ url_for('set_initial_balance', user_id=user.id) }}" class="btn btn-sm btn-success">
-                                        <i class="fas fa-coins"></i> Credit
-                                    </a>
-                                    {% elif user.role == 'admin' and current_user.role == 'super_admin' %}
-                                    <a href="{{ url_for('set_initial_balance', user_id=user.id) }}" class="btn btn-sm btn-warning">
-                                        <i class="fas fa-coins"></i> Credit
+                                <td class="text-center">
+                                    {% if user.encrypted_totp_secret %}
+                                    <span class="badge bg-success-subtle text-success-emphasis"><i class="fas fa-check me-1"></i> Setup</span>
+                                    {% else %}
+                                    <span class="badge bg-danger-subtle text-danger-emphasis"><i class="fas fa-times me-1"></i> Not Setup</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="text-end">
+                                    {% if current_user.role == 'super_admin' %}
+                                    <a href="{{ url_for('manage_user_detail', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary me-1">
+                                        <i class="fas fa-pen-to-square"></i> Manage
                                     </a>
                                     {% endif %}
-
-                                {% elif current_user.role not in ['admin', 'super_admin'] %}
-                                    <span class="text-muted">No Action</span>
-                                {% endif %}
-
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                    
+                                    {# Credit Button Logic #}
+                                    {% if user.role != 'super_admin' and user.id != current_user.id %}
+                                        {% if user.role == 'customer' and current_user.role in ['admin', 'super_admin'] %}
+                                        <a href="{{ url_for('set_initial_balance', user_id=user.id) }}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-coins"></i> Credit
+                                        </a>
+                                        {% elif user.role == 'admin' and current_user.role == 'super_admin' %}
+                                        <a href="{{ url_for('set_initial_balance', user_id=user.id) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-coins"></i> Credit
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
-            <a href="{{ url_for('dashboard_admin') }}" class="btn btn-outline-secondary mt-3"><i class="fas fa-arrow-left me-2"></i>Back to Admin Dashboard</a>
+            <div class="card-footer bg-light-subtle text-muted small">
+                Displaying {{ users|length }} users.
+            </div>
         </div>
     </div>
 </div>
