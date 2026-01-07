@@ -8,14 +8,13 @@ class Block:
     def __init__(self, index, data, previous_hash, nonce=0, timestamp=None):
         self.index = index
         self.timestamp = timestamp or datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        self.data = data # This is a JSON string of the transaction
+        self.data = data
         self.previous_hash = previous_hash
         self.nonce = nonce
         self.hash = self.compute_hash()
 
     def compute_hash(self):
         """Computes the SHA-512 hash for the block, mandated by the paper."""
-        # The data to be hashed must be consistent and ordered
         block_string = json.dumps({
             "index": self.index,
             "timestamp": self.timestamp,
@@ -24,7 +23,6 @@ class Block:
             "nonce": self.nonce
         }, sort_keys=True)
         
-        # Use SHA-512, as mandated
         return hashlib.sha512(block_string.encode()).hexdigest()
 
 class Blockchain:
@@ -41,7 +39,7 @@ class Blockchain:
         genesis_block = Block(
             index=0, 
             data=json.dumps({"message": "Genesis Block of Secure Banking System"}),
-            previous_hash="0" * 128 # 128 chars for SHA-512 zero padding
+            previous_hash="0" * 128 
         )
         self.chain.append(genesis_block)
 
@@ -70,13 +68,9 @@ class Blockchain:
     def mine_new_transaction(self, data):
         """Wrapper to create a new block and mine it."""
         last_block = self.last_block
-
-        # 🔥 --- CORRECTION WAS HERE ---
-        # The 'data' variable is already an encrypted string from app.py.
-        # We must NOT wrap it in json.dumps() again.
         new_block = Block(
             index=last_block.index + 1,
-            data=data, # Removed json.dumps(data)
+            data=data,
             previous_hash=last_block.hash
         )
         
@@ -88,7 +82,6 @@ class Blockchain:
 
     def is_chain_valid(self):
         """Checks the integrity of the entire chain."""
-        # Iterate from the second block (index 1)
         for i in range(1, len(self.chain)):
             current_block = self.chain[i]
             previous_block = self.chain[i-1]

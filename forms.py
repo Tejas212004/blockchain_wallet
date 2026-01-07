@@ -1,24 +1,43 @@
 from flask_wtf import FlaskForm
-# 🔥TextAreaField is still used by TransactionForm, so it stays
-from wtforms import StringField, FloatField, TextAreaField, SelectField, SubmitField 
+from wtforms import StringField, FloatField, TextAreaField, SubmitField 
 from wtforms.validators import DataRequired, Length, Regexp, NumberRange
 
 class TransactionForm(FlaskForm):
-    amount = FloatField('Amount', validators=[DataRequired()])
-    recipient = StringField('Recipient', validators=[DataRequired(), Length(max=150)])
-    notes = TextAreaField('Notes', validators=[DataRequired(), Length(max=1000)])
-    status = SelectField('Status', choices=[('pending', 'Pending'), ('completed', 'Completed'), ('failed', 'Failed')])
+    """
+    Form for customers to initiate transfers.
+    The 'status' field has been removed to ensure the ledger is 
+    system-controlled and prevents user tampering.
+    """
+    amount = FloatField('Amount', validators=[
+        DataRequired(),
+        NumberRange(min=0.01, message="Amount must be greater than zero.")
+    ])
     
-    # CRITICAL ADDITION: TOTP code for transaction authorization
+    recipient = StringField('Recipient', validators=[
+        DataRequired(), 
+        Length(max=150)
+    ])
+    
+    notes = TextAreaField('Notes', validators=[
+        DataRequired(), 
+        Length(max=1000)
+    ])
+    
+    # STATUS FIELD REMOVED: Status is now automatically set to 'COMPLETED' 
+    # in the backend logic (app.py) after successful mining.
+
     totp_code = StringField('Live TOTP Code (from Authenticator App)', 
-                            validators=[DataRequired(), Length(min=6, max=6), Regexp(r'^\d+$', message="TOTP must be digits only")])
+                            validators=[
+                                DataRequired(), 
+                                Length(min=6, max=6), 
+                                Regexp(r'^\d+$', message="TOTP must be digits only")
+                            ])
                             
     submit = SubmitField('Send')
 
-# --- NEW: Form required for Admin Credit action (set_initial_balance) ---
+# Admin Credit action (set_initial_balance) ---
 class InitialBalanceForm(FlaskForm):
     """Form used by the Admin to manually credit a new user's wallet."""
-    # Amount must be positive
     amount = FloatField('Amount to Credit (₹)', 
                         validators=[
                             DataRequired(), 

@@ -27,7 +27,6 @@ def encrypt_data(data: str) -> str:
     ciphertext_with_tag = aesgcm.encrypt(nonce, data.encode('utf-8'), associated_data=None)
     
     # 3. Combine Nonce (IV) and Ciphertext+Tag for storage
-    # Nonce (12 bytes) + Ciphertext + Tag (16 bytes)
     full_cipher_text = nonce + ciphertext_with_tag
     
     # 4. Return as hex string for storage in a database column (Text/String)

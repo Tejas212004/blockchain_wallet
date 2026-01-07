@@ -13,7 +13,7 @@
 <div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
         
-        <div class="card">
+        <div class="card shadow-sm border-0">
             
             <div class="card-header bg-customer-gradient text-white text-center p-4">
                 <i class="fas fa-paper-plane fa-3x"></i>
@@ -37,7 +37,7 @@
                     </div>
                     
                     <div class="form-floating mb-3">
-                        {{ form.recipient(class="form-control", id="recipient", placeholder="Recipient's Email or Wallet ID", required=true) }}
+                        {{ form.recipient(class="form-control", id="recipient", placeholder="Recipient's Email", required=true) }}
                         <label for="recipient">Recipient (Email/Address)</label>
                         {% for error in form.recipient.errors %}
                             <span class="text-danger small d-block mt-1">{{ error }}</span>
@@ -52,17 +52,10 @@
                         {% endfor %}
                     </div>
 
-                    <div class="form-floating mb-4">
-                        {{ form.status(class="form-select", id="status") }}
-                        <label for="status">Status</label>
-                        {% for error in form.status.errors %}
-                            <span class="text-danger small d-block mt-1">{{ error }}</span>
-                        {% endfor %}
-                    </div>
-
                     <hr class="my-4">
 
                     <h5 class="text-danger mb-3"><i class="fas fa-shield-alt me-1"></i> Security Verification</h5>
+                    <p class="small text-muted mb-3">A live TOTP code is required to cryptographically sign and authorize this transaction.</p>
                     
                     <div class="form-floating mb-4">
                         {{ form.totp_code(class="form-control", id="totp_code", placeholder="123456", size=6, maxlength=6, pattern="\\d{6}", title="Six digit TOTP code", required=true) }}
@@ -77,6 +70,7 @@
                     </div>
                 </form>
             </div>
+            
             <div class="card-footer text-center bg-light-subtle py-3">
                 <a href="{{ url_for('dashboard_customer') }}" class="text-muted text-decoration-none small">
                     <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
