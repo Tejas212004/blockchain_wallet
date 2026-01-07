@@ -10,13 +10,18 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), nullable=False, unique=True)
     email = db.Column(db.String(150), nullable=False, unique=True)
+    
     # Stored using a strong hash function (e.g., pbkdf2:sha256 or bcrypt)
     password_hash = db.Column(db.String(200), nullable=False)
+    
     # TOTP secret is now encrypted (ciphertext in hex) for security
     encrypted_totp_secret = db.Column(db.String(256), nullable=True) 
     
     # 🔥 CORRECTION: Increased size from 20 to 30 to safely accommodate 'super_admin'
     role = db.Column(db.String(30), default='customer') 
+
+    # NEW: Flag to force a password change (for provisioned admins)
+    needs_password_change = db.Column(db.Boolean, default=False) 
     
     blocks = db.relationship('BlockModel', backref='user', lazy=True)
 
@@ -33,10 +38,11 @@ class User(db.Model, UserMixin):
         self.encrypted_totp_secret = encrypt_data(secret)
 
     def set_password(self, password):
-        # werkzeug will use the default, strong hashing algorithm (usually pbkdf2:sha256).
+        """Sets the password_hash using Werkzeug's secure hashing."""
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        """Verifies the provided password against the stored hash."""
         return check_password_hash(self.password_hash, password)
 
 # This model replaces the simple 'Transaction' table

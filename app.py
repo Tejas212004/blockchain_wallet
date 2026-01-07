@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-# 🔥 IMPORTANT: Ensure all necessary imports are present
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from functools import wraps
@@ -39,6 +38,17 @@ def admin_required(f):
         if not current_user.is_authenticated or current_user.role not in ['admin', 'super_admin']:
             flash("Administrator access required.", 'danger')
             return redirect(url_for('dashboard_redirect'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def password_change_required(f):
+    """Force users with the 'needs_password_change' flag to update credentials before accessing dashboards."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.is_authenticated and current_user.needs_password_change:
+            if request.endpoint not in ['change_password', 'logout', 'static']:
+                flash("Security Notice: You must change your temporary password to continue.", 'warning')
+                return redirect(url_for('change_password'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -263,12 +273,6 @@ def login():
     # If the user is already authenticated by Flask-Login (full access), redirect
     if current_user.is_authenticated and session.get('totp_verified'):
         return redirect(url_for('dashboard_redirect')) 
-
-    # ---
-    # 🔥 CORRECTION IS HERE
-    # We only pop 'last_totp_attempt'. We MUST NOT pop 'awaiting_totp'
-    # because that breaks the multi-stage setup flow.
-    # ---
     session.pop('last_totp_attempt', None) 
     
     if request.method == 'POST':
@@ -319,6 +323,21 @@ def login():
         return render_template('login.html')
 
     return render_template('login.html')
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        current_pwd, new_pwd = request.form.get('current_password'), request.form.get('new_password')
+        if not current_user.check_password(current_pwd):
+            flash("Current temporary password incorrect.", 'danger')
+            return redirect(url_for('change_password'))
+        current_user.set_password(new_pwd)
+        current_user.needs_password_change = False
+        db.session.commit()
+        flash("Password updated. Full access granted.", 'success')
+        return redirect(url_for('dashboard_redirect'))
+    return render_template('change_password.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -399,28 +418,22 @@ def setup_totp():
 @app.route('/verify_totp', methods=['GET', 'POST'])
 def verify_totp():
     # Check 1: Is the user ALREADY fully logged in and verified?
-    # 'current_user.is_authenticated' is 100% reliable here
-    # because our user_loader links it directly to 'totp_verified'.
     if current_user.is_authenticated:
         return redirect(url_for('dashboard_redirect'))
     
     # Check 2: If not, is this a user in the middle of the setup-flow?
     user_id = session.get('awaiting_totp')
     if not user_id:
-        # If there's no 'awaiting_totp' flag, they are truly unauthorized.
         flash("Authentication required. Please log in to begin setup.", 'danger')
         return redirect(url_for('login'))
         
     user = User.query.get(user_id)
     if not user:
-        # User ID in session is invalid, clear it and send to login
         session.pop('awaiting_totp', None)
         flash("User session error. Please log in again.", 'danger')
         return redirect(url_for('login'))
 
-    # --- From here, the logic is for a user in the setup flow ---
-    
-    # Get the secret from session (for setup finalization)
+    # Get the secret from session (for setup finalization) or DB
     secret_to_verify = session.get('totp_secret') or user.totp_secret
     
     if not secret_to_verify or secret_to_verify == '[Decryption/Tamper Error]':
@@ -435,10 +448,8 @@ def verify_totp():
         totp = pyotp.TOTP(secret_to_verify)
         
         if totp.verify(code):
-            
             # If the secret was in the session, it means setup is being finalized
             if session.get('totp_secret'):
-                # Save the secret to the DB and use the User model's setter (which encrypts)
                 user.totp_secret = session.pop('totp_secret') 
                 db.session.commit()
                 flash("TOTP setup and verification complete. You are now fully secured.", 'success')
@@ -446,16 +457,21 @@ def verify_totp():
                 flash("TOTP verified successfully.", 'success')
                 
             # Final Login Step: Grant full authentication via Flask-Login
-            login_user(user) # This is the FIRST time login_user is called for this session (if coming from setup)
+            login_user(user) 
             session['totp_verified'] = True
-            session.pop('awaiting_totp', None) # Clean up temporary flag
+            session.pop('awaiting_totp', None) 
+
+            # 🔥 THE FIX: Intercept the redirect if a password change is required
+            if user.needs_password_change:
+                flash("Credentials verified. Please update your temporary password to continue.", "info")
+                return redirect(url_for('change_password'))
+            
             return redirect(url_for('dashboard_redirect'))
             
         else:
             flash("Invalid TOTP code. Please try again.", 'danger')
             return render_template('verify_totp.html')
 
-    # On a GET request, just show the verification page
     return render_template('verify_totp.html')
 
 # --- Dashboard Routes ---
@@ -736,20 +752,27 @@ def create_admin_account():
         email = request.form['email']
         password = request.form['password']
         
+        # Check if user already exists
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash("Username or email already exists.", 'danger')
             return render_template('create_admin.html') 
 
-        new_user = User(username=username, email=email, role='admin')
-        new_user.set_password(password)
+        new_user = User(
+            username=username, 
+            email=email, 
+            role='admin', 
+            needs_password_change=True
+        )
+        new_user.set_password(password) # Hash the temporary password
         
         db.session.add(new_user)
         db.session.commit()
-        flash(f"New Admin account created for {username}. They must log in and set up TOTP.", 'success')
+        
+        # Flash message updated to reflect the new security requirement
+        flash(f"New Admin account created for {username}. They MUST change their password on first login.", 'success')
         return redirect(url_for('dashboard_admin'))
         
-    return render_template('create_admin.html') 
-# -----------------------------------------------
+    return render_template('create_admin.html')
 
 # -----------------------------------------------
 # --- CRITICAL ROUTE: Transaction Route (Unchanged, remains robust) ---

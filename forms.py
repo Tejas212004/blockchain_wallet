@@ -25,10 +25,4 @@ class InitialBalanceForm(FlaskForm):
                             NumberRange(min=1.00, message='Amount must be a positive value.')
                         ])
     
-    # 🔥 --- CORRECTION ---
-    # The 'note' field was removed. 
-    # It was marked as DataRequired() but was not included in the 
-    # set_initial_balance.html template, causing validation to always fail.
-    # The app.py route hardcodes this note anyway, so this field was not needed.
-    
     submit = SubmitField('Set Initial Balance')
